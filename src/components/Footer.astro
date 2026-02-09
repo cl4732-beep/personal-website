@@ -1,0 +1,37 @@
+---
+import SocialLinks from './SocialLinks.astro';
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="site-footer container">
+  <SocialLinks />
+  <p class="copyright">&copy; {currentYear} Clemente Lacerda</p>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-2xl);
+    padding-bottom: var(--space-2xl);
+    margin-top: var(--space-4xl);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+
+  .copyright {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 639px) {
+    .site-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-md);
+    }
+  }
+</style>

@@ -1,0 +1,74 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'writings'>;
+}
+
+const { post } = Astro.props;
+
+const formattedDate = post.data.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<a href={`/writings/${post.id}`} class="post-card">
+  <div class="post-card-header">
+    <h2 class="post-card-title">{post.data.title}</h2>
+    <time datetime={post.data.date.toISOString()}>{formattedDate}</time>
+  </div>
+  {post.data.description && (
+    <p class="post-card-desc">{post.data.description}</p>
+  )}
+</a>
+
+<style>
+  .post-card {
+    display: block;
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    background-image: none;
+    transition: color var(--transition-base);
+  }
+
+  .post-card:hover {
+    color: var(--color-accent);
+    background-size: 0% 0;
+  }
+
+  .post-card:last-child {
+    border-bottom: none;
+  }
+
+  .post-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-md);
+  }
+
+  .post-card-title {
+    font-size: var(--text-lg);
+    font-weight: 500;
+    margin-bottom: 0;
+    line-height: var(--leading-tight);
+  }
+
+  .post-card time {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .post-card-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: var(--space-xs);
+    margin-bottom: 0;
+    line-height: var(--leading-body);
+  }
+</style>

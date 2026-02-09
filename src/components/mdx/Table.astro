@@ -1,0 +1,44 @@
+---
+
+---
+
+<div class="table-wrapper">
+  <table>
+    <slot />
+  </table>
+</div>
+
+<style>
+  .table-wrapper {
+    overflow-x: auto;
+    margin: var(--space-xl) 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  table :global(th) {
+    text-align: left;
+    font-weight: 600;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 2px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  table :global(td) {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  table :global(tr:last-child td) {
+    border-bottom: none;
+  }
+
+  table :global(tbody tr:hover) {
+    background-color: var(--color-surface);
+  }
+</style>

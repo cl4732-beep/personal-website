@@ -1,0 +1,51 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('writings'))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<PageLayout title="Writings — Clemente Lacerda" description="Essays, notes, and ideas">
+  <section class="writings-page">
+    <h1>Writings</h1>
+    {posts.length > 0 ? (
+      <ul class="post-list">
+        {posts.map((post) => (
+          <li>
+            <PostCard post={post} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty-state">Nothing here yet. Check back soon.</p>
+    )}
+  </section>
+</PageLayout>
+
+<style>
+  .writings-page {
+    padding-top: var(--space-3xl);
+  }
+
+  .writings-page h1 {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .post-list li {
+    margin-bottom: 0;
+  }
+
+  .empty-state {
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+</style>

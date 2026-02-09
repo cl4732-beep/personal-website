@@ -1,0 +1,118 @@
+---
+import type { StravaActivity } from '../../lib/strava';
+import { formatDistance, formatDuration, formatPace, formatRelativeDate } from '../../lib/date';
+
+interface Props {
+  activities: StravaActivity[];
+}
+
+const { activities } = Astro.props;
+
+const activityIcons: Record<string, string> = {
+  Run: '🏃',
+  Ride: '🚴',
+  Swim: '🏊',
+  Walk: '🚶',
+  Hike: '🥾',
+  WeightTraining: '🏋️',
+  Yoga: '🧘',
+};
+---
+
+<div class="activity-list">
+  <h3 class="label">Recent activities</h3>
+  <ul>
+    {activities.map((activity) => (
+      <li class="activity-item">
+        <div class="activity-header">
+          <span class="activity-icon">{activityIcons[activity.type] || '🏅'}</span>
+          <a
+            href={`https://www.strava.com/activities/${activity.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="activity-name"
+          >
+            {activity.name}
+          </a>
+          <time class="activity-date">{formatRelativeDate(activity.start_date_local)}</time>
+        </div>
+        <div class="activity-stats">
+          {activity.distance > 0 && (
+            <span class="activity-stat">{formatDistance(activity.distance)}</span>
+          )}
+          <span class="activity-stat">{formatDuration(activity.moving_time)}</span>
+          {activity.distance > 0 && activity.average_speed > 0 && (
+            <span class="activity-stat">{formatPace(activity.average_speed)}</span>
+          )}
+          {activity.total_elevation_gain > 0 && (
+            <span class="activity-stat">{activity.total_elevation_gain.toFixed(0)}m ↑</span>
+          )}
+        </div>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .activity-list h3 {
+    margin-bottom: var(--space-lg);
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .activity-item {
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 0;
+  }
+
+  .activity-item:last-child {
+    border-bottom: none;
+  }
+
+  .activity-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+  }
+
+  .activity-icon {
+    font-size: var(--text-sm);
+    flex-shrink: 0;
+  }
+
+  .activity-name {
+    font-weight: 500;
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activity-date {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  .activity-stats {
+    display: flex;
+    gap: var(--space-md);
+    padding-left: calc(var(--text-sm) + var(--space-sm));
+  }
+
+  .activity-stat {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    letter-spacing: 0;
+  }
+</style>

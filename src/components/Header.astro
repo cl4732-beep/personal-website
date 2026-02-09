@@ -1,0 +1,80 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+const pathname = Astro.url.pathname;
+const navLinks = [
+  { href: '/writings', label: 'Writings' },
+  { href: '/strava', label: 'Strava' },
+];
+---
+
+<header class="site-header container">
+  <a href="/" class="site-name">Clemente Lacerda</a>
+  <nav class="site-nav">
+    {navLinks.map((link) => (
+      <a
+        href={link.href}
+        class:list={['nav-link', { active: pathname.startsWith(link.href) }]}
+      >
+        {link.label}
+      </a>
+    ))}
+    <ThemeToggle />
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+    gap: var(--space-md);
+  }
+
+  .site-name {
+    font-family: var(--font-serif);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text);
+    background-image: none;
+    white-space: nowrap;
+  }
+
+  .site-name:hover {
+    color: var(--color-text);
+    background-size: 0% 0;
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .nav-link {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    transition: color var(--transition-base);
+  }
+
+  .nav-link:hover {
+    color: var(--color-text);
+  }
+
+  .nav-link.active {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+
+  @media (max-width: 639px) {
+    .site-header {
+      flex-wrap: wrap;
+    }
+
+    .site-nav {
+      gap: var(--space-md);
+    }
+  }
+</style>

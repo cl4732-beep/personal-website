@@ -1,0 +1,84 @@
+---
+import PageLayout from './PageLayout.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  frontmatter: CollectionEntry<'writings'>['data'];
+}
+
+const { frontmatter } = Astro.props;
+
+const formattedDate = frontmatter.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const formattedUpdated = frontmatter.updated?.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<PageLayout title={frontmatter.title} description={frontmatter.description}>
+  <article class="post">
+    <header class="post-header">
+      <h1>{frontmatter.title}</h1>
+      <div class="post-meta">
+        <time datetime={frontmatter.date.toISOString()}>{formattedDate}</time>
+        {formattedUpdated && (
+          <span class="post-updated">
+            &middot; Updated <time datetime={frontmatter.updated!.toISOString()}>{formattedUpdated}</time>
+          </span>
+        )}
+      </div>
+      {frontmatter.tags && frontmatter.tags.length > 0 && (
+        <div class="post-tags">
+          {frontmatter.tags.map((tag) => (
+            <span class="tag">{tag}</span>
+          ))}
+        </div>
+      )}
+    </header>
+    <div class="prose">
+      <slot />
+    </div>
+  </article>
+</PageLayout>
+
+<style>
+  .post-header {
+    margin-bottom: var(--space-3xl);
+  }
+
+  .post-header h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .post-meta {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .post-updated {
+    color: var(--color-text-muted);
+  }
+
+  .post-tags {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    background-color: var(--color-surface);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+  }
+</style>

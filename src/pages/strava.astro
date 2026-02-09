@@ -1,0 +1,29 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import StravaDashboard from '../components/strava/StravaDashboard.astro';
+---
+
+<PageLayout title="Strava — Clemente Lacerda" description="My running and cycling stats from Strava">
+  <section class="strava-page">
+    <h1>Activity</h1>
+    <p class="page-intro">
+      Live stats from <a href="https://www.strava.com/athletes/7759885" target="_blank" rel="noopener noreferrer">my Strava</a>, updated every 15 minutes.
+    </p>
+    <StravaDashboard />
+  </section>
+</PageLayout>
+
+<style>
+  .strava-page {
+    padding-top: var(--space-3xl);
+  }
+
+  .strava-page h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .page-intro {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3xl);
+  }
+</style>

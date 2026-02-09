@@ -1,0 +1,48 @@
+---
+import { getAthleteStats, getRecentActivities } from '../../lib/strava';
+import WeeklyStats from './WeeklyStats.astro';
+import ActivityChart from './ActivityChart.astro';
+import ActivityList from './ActivityList.astro';
+
+let stats = null;
+let activities: Awaited<ReturnType<typeof getRecentActivities>> = [];
+let error = false;
+
+try {
+  [stats, activities] = await Promise.all([
+    getAthleteStats(),
+    getRecentActivities(1, 15),
+  ]);
+} catch (e) {
+  error = true;
+  console.error('Strava API error:', e);
+}
+---
+
+{error || !stats ? (
+  <div class="strava-error">
+    <p>Strava data is temporarily unavailable. Check back soon.</p>
+  </div>
+) : (
+  <div class="strava-dashboard">
+    <WeeklyStats stats={stats} />
+    {activities.length > 0 && <ActivityChart activities={activities} />}
+    {activities.length > 0 && <ActivityList activities={activities} />}
+  </div>
+)}
+
+<style>
+  .strava-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xl);
+  }
+
+  .strava-error {
+    padding: var(--space-xl);
+    background-color: var(--color-surface);
+    border-radius: 6px;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+</style>

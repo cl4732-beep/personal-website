@@ -1,0 +1,146 @@
+/* ========================================
+   Typography
+   ======================================== */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-heading);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-lg);
+}
+
+h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-md);
+}
+
+h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-sm);
+}
+
+h4 {
+  font-size: var(--text-base);
+  margin-bottom: var(--space-sm);
+}
+
+p {
+  margin-bottom: var(--space-md);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Links --- */
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  transition: background-size var(--transition-base), color var(--transition-base);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+  background-size: 100% 1px;
+}
+
+/* --- Small caps label --- */
+.label {
+  font-variant: small-caps;
+  letter-spacing: var(--tracking-wide);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+}
+
+/* --- Time / date --- */
+time {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* --- Horizontal rule --- */
+hr {
+  border: none;
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--space-2xl) 0;
+}
+
+/* --- Lists --- */
+ul,
+ol {
+  padding-left: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+li {
+  margin-bottom: var(--space-xs);
+}
+
+li:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Blockquote --- */
+blockquote {
+  border-left: 3px solid var(--color-accent);
+  padding-left: var(--space-lg);
+  margin: var(--space-xl) 0;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+/* --- Code --- */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--color-code-bg);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  background-color: var(--color-code-bg);
+  padding: var(--space-lg);
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: var(--space-xl) 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+@media (min-width: 640px) {
+  h1 {
+    font-size: var(--text-3xl);
+  }
+
+  h2 {
+    font-size: var(--text-2xl);
+  }
+
+  h3 {
+    font-size: var(--text-xl);
+  }
+}
