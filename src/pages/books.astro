@@ -13,7 +13,6 @@ try {
 }
 
 const byYear = groupBooksByYear(books);
-const totalRead = books.filter((b) => b.status === 'Read').length;
 const years = byYear.map((g) => g.year);
 const defaultYear = years[0] ?? new Date().getFullYear().toString();
 ---
@@ -21,9 +20,16 @@ const defaultYear = years[0] ?? new Date().getFullYear().toString();
 <PageLayout title="Books — Clemente Lacerda" description="Books I've read, organized by year">
   <section class="books-page">
     <h1>Books</h1>
-    <p class="page-intro">
-      <strong>{totalRead}</strong> books read and counting.
-    </p>
+    <div class="page-quotes">
+      <blockquote>
+        "It is what you read when you don't have to that determines what you will be when you can't help it."
+        <cite>Oscar Wilde</cite>
+      </blockquote>
+      <blockquote>
+        "Fairy tales are more than true: not because they tell us that dragons exist, but because they tell us that dragons can be beaten."
+        <cite>Neil Gaiman</cite>
+      </blockquote>
+    </div>
 
     {error ? (
       <p class="error-state">Book data is temporarily unavailable. Check back soon.</p>
@@ -124,23 +130,42 @@ const defaultYear = years[0] ?? new Date().getFullYear().toString();
   }
 
   .books-page h1 {
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
   }
 
-  .page-intro {
+  .page-quotes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-3xl);
+    max-width: var(--content-max-width);
+  }
+
+  .page-quotes blockquote {
+    border-left: none;
+    padding-left: 0;
+    margin: 0;
+    font-style: italic;
+    font-size: var(--text-sm);
     color: var(--color-text-muted);
-    margin-bottom: var(--space-2xl);
+    line-height: var(--leading-body);
   }
 
-  .page-intro strong {
+  .page-quotes cite {
+    font-style: normal;
     color: var(--color-accent);
-    font-weight: 600;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .page-quotes cite::before {
+    content: '— ';
   }
 
   /* --- Year toggle buttons --- */
   .year-toggles {
     display: flex;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     margin-bottom: var(--space-3xl);
   }
 
