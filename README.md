@@ -28,6 +28,9 @@ src/
 │   ├── mdx/
 │   │   ├── Callout.astro       # Callout/admonition box for MDX
 │   │   └── Table.astro         # Responsive table wrapper for MDX
+│   ├── across-the-world/
+│   │   ├── RunMap.astro        # Leaflet map with clustered run markers and route overlays
+│   │   └── MediaGallery.astro  # Polaroid-style run photo gallery + map focus interactions
 │   └── strava/
 │       ├── StravaDashboard.astro  # Orchestrates data fetching and layout
 │       ├── WeeklyStats.astro      # Running stats summary cards
@@ -47,6 +50,7 @@ src/
 ├── lib/
 │   ├── date.ts                 # Duration, distance, pace, and relative date formatters
 │   ├── notion.ts               # Notion API client — fetches books, groups by year
+│   ├── run-locations-cache.ts  # Reads/sanitizes run location cache from .cache/public data
 │   └── strava.ts               # Strava API client — OAuth token refresh, stats, activities
 ├── pages/
 │   ├── index.astro             # Homepage: hero, Macintosh 128K, recent writings
@@ -73,7 +77,7 @@ src/
 | `/writings/[slug]` | Individual writing post rendered from MDX |
 | `/books` | Books read and currently reading, powered by Notion. Organized by year with toggle buttons and a 3-column responsive grid |
 | `/strava` | Live training dashboard — two-column layout with running stats, weekly distance chart, activity breakdown doughnut, and recent activities list |
-| `/across-the-world` | Interactive map of run locations and saved routes, sourced from processed Strava export cache |
+| `/across-the-world` | Interactive map of run locations and saved routes, plus a media gallery of photo runs with map-focus jump links |
 | `/rss.xml` | RSS feed of all writings |
 
 ## External Integrations
@@ -130,6 +134,8 @@ The map at `/across-the-world` reads from `public/data/run-locations.json` (with
 1. Place the raw Strava export at `local-data/strava-export` (preferred) or `Strava_Export` (legacy fallback)
 2. Run `npm run seed:locations` once to build cache/data artifacts and copy referenced media
 3. Optionally run `npm run update:locations` to append newly recorded runs from the API
+
+The page automatically surfaces runs with media in a gallery and links each gallery card back to its map marker.
 
 Local heavy datasets and prototypes are intentionally kept out of git via `.gitignore`.
 
