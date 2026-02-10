@@ -109,8 +109,9 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
     const mapEl = document.getElementById('run-map');
     if (!mapEl) return;
 
-    // Prevent re-initialization after View Transitions
-    if ((mapEl as any)._leaflet_id) return;
+    // Prevent re-initialization after View Transitions (async race condition)
+    if ((mapEl as any)._leaflet_id || (mapEl as any).__mapInitPending) return;
+    (mapEl as any).__mapInitPending = true;
 
     const mapDataUrl = (mapEl as HTMLElement).dataset.mapUrl || '/data/run-locations.json';
 
