@@ -17,6 +17,12 @@ pnpm-debug.log*
 .env
 .env.production
 
+# local cache
+.cache/
+
+# strava raw export data (large, processed into .cache/)
+Strava_Export/
+
 # macOS-specific files
 .DS_Store
 

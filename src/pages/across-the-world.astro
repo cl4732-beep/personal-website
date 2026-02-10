@@ -1,0 +1,132 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import RunMap from '../components/across-the-world/RunMap.astro';
+import { formatDistance } from '../lib/date';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+// Read from the cached JSON (seeded from Strava export, updated via API)
+let data: { runs: any[]; routes: any[]; stats: any } = { runs: [], routes: [], stats: {} };
+let error = false;
+
+try {
+  const cachePath = join(process.cwd(), '.cache', 'run-locations.json');
+  data = JSON.parse(readFileSync(cachePath, 'utf-8'));
+} catch (e) {
+  error = true;
+  console.error('Run locations cache not found. Run `npm run seed:locations` first.');
+}
+
+const { runs, routes, stats } = data;
+
+// Date range
+const earliest = stats.dateRange?.[0] ? new Date(stats.dateRange[0]) : null;
+const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
+---
+
+<PageLayout title="Across the World — Clemente Lacerda" description="A map of every place I've run, tracked with Strava">
+  <section class="atw-page">
+    <div class="atw-header">
+      <h1>Across the World</h1>
+      <p class="page-intro">
+        Every run I've tracked with <a href="https://www.strava.com/athletes/7759885" target="_blank" rel="noopener noreferrer">Strava</a> since {earliest ? earliest.getFullYear() : '2015'}, pinned on a map.
+      </p>
+    </div>
+
+    {error || runs.length === 0 ? (
+      <div class="atw-error">
+        <p>{error ? 'Map data is unavailable. Run `npm run seed:locations` to process Strava export.' : 'No run locations found.'}</p>
+      </div>
+    ) : (
+      <>
+        <div class="atw-stats">
+          <div class="stat">
+            <span class="stat-value">{stats.totalRuns.toLocaleString()}</span>
+            <span class="stat-label">Runs</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{formatDistance(stats.totalDistance)}</span>
+            <span class="stat-label">Total Distance</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{stats.uniqueLocations}</span>
+            <span class="stat-label">Locations</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{routes.length}</span>
+            <span class="stat-label">Saved Routes</span>
+          </div>
+          {earliest && latest && (
+            <div class="stat">
+              <span class="stat-value">{earliest.getFullYear()}–{latest.getFullYear()}</span>
+              <span class="stat-label">Years</span>
+            </div>
+          )}
+        </div>
+        <RunMap runs={runs} routes={routes} />
+      </>
+    )}
+  </section>
+</PageLayout>
+
+<style>
+  .atw-page {
+    padding-top: var(--space-3xl);
+    padding-bottom: var(--space-3xl);
+  }
+
+  .atw-header {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .atw-header h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .page-intro {
+    color: var(--color-text-muted);
+    max-width: var(--content-max-width);
+  }
+
+  .atw-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg) var(--space-2xl);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: var(--tracking-heading);
+  }
+
+  .stat-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    font-variant: small-caps;
+  }
+
+  .atw-error {
+    padding: var(--space-xl);
+    background-color: var(--color-surface);
+    border-radius: 6px;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  @media (min-width: 640px) {
+    .atw-page {
+      padding-top: var(--space-4xl);
+    }
+  }
+</style>
