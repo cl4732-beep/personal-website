@@ -15,6 +15,7 @@ const posts = (await getCollection('writings'))
       I write about things I find interesting and share what I'm working on.
       This is a place for my writings, ideas, and a live dashboard of my training on Strava.
     </p>
+    <p class="currently">Currently: MBA Student at Columbia Business School, Class of 2027</p>
   </section>
 
   <hr />
@@ -60,6 +61,16 @@ const posts = (await getCollection('writings'))
     color: var(--color-text-muted);
     line-height: var(--leading-body);
     max-width: var(--content-max-width);
+  }
+
+  .currently {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    margin-bottom: 0;
+    letter-spacing: var(--tracking-wide);
+    font-variant: small-caps;
+    text-transform: lowercase;
   }
 
   .recent-writings {
