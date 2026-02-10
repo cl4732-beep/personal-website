@@ -1,0 +1,100 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout title="About — Clemente Lacerda" description="About Clemente Lacerda — background, beliefs, and principles.">
+  <section class="about-page">
+    <h1>About</h1>
+    <div class="about-content">
+      <p>
+        I am the oldest of three siblings. I am passionate about learning, building, and craft.<sup>1</sup> I also believe that sharing the journey with people you admire, respect, and love makes any project and experience better.
+      </p>
+      <p>
+        I was born and raised in Brazil. I lived in Singapore while completing my Master's in Finance at NUS Business School, and I am now based in New York as a first-year MBA student at Columbia. Singapore expanded my self-awareness, challenged old beliefs, and reshaped my worldview. New York reinforced how much a city can shape your inner life. Environment, context, and people matter.
+      </p>
+      <p>
+        I believe that everything you do matters. Integrity is non-negotiable. There is no cheating reality. Compounding may be the closest thing we have to magic.<sup>2</sup> Small actions, repeated consistently over long periods, create outsized outcomes.<sup>3</sup>
+      </p>
+      <p>
+        I keep a small set of principles and a long list of curiosities.
+      </p>
+    </div>
+    <footer class="footnotes">
+      <p><span class="footnote-marker">1</span> There is long-term satisfaction to be found not in attaining, but in becoming. Craftsmanship carries through a product and service — it has weight, it has meaning. <a href="https://www.youtube.com/watch?v=8VHOO_WvOf4" target="_blank" rel="noopener noreferrer">Inside Mizuno: Craft, Patience & Mastery</a></p>
+      <p><span class="footnote-marker">2</span> Often attributed to Albert Einstein: "Compound interest is the eighth wonder of the world."</p>
+      <p><span class="footnote-marker">3</span> Popularized through "the butterfly effect," the idea that small changes can produce large consequences in complex systems.</p>
+    </footer>
+  </section>
+</PageLayout>
+
+<style>
+  .about-page {
+    padding-top: var(--space-3xl);
+  }
+
+  .about-page h1 {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .about-content {
+    max-width: var(--content-max-width);
+  }
+
+  .about-content p {
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+    color: var(--color-text);
+    margin-bottom: var(--space-lg);
+    letter-spacing: var(--tracking-body);
+  }
+
+  .about-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .about-content sup {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    font-weight: 600;
+    line-height: 0;
+    vertical-align: super;
+  }
+
+  .footnotes {
+    max-width: var(--content-max-width);
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footnotes p {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: var(--leading-body);
+    margin-bottom: var(--space-sm);
+  }
+
+  .footnotes p:last-child {
+    margin-bottom: 0;
+  }
+
+  .footnote-marker {
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .footnotes a {
+    color: var(--color-accent);
+    font-style: italic;
+  }
+
+  .footnotes a:hover {
+    color: var(--color-text);
+  }
+
+  @media (min-width: 640px) {
+    .about-page {
+      padding-top: var(--space-4xl);
+    }
+  }
+</style>
