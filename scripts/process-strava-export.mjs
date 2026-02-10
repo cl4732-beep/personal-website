@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
+import { execFileSync } from 'node:child_process';
 import FitParser from 'fit-file-parser';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -322,10 +323,23 @@ async function main() {
     if (existsSync(src) && !existsSync(dest)) {
       copyFileSync(src, dest);
       copiedMedia++;
+
+      // Compress JPEGs for web (600px wide, quality 60)
+      if (/\.jpe?g$/i.test(filename)) {
+        try {
+          execFileSync('sips', [
+            '--resampleWidth', '600',
+            '--setProperty', 'formatOptions', '60',
+            dest,
+          ], { stdio: 'ignore' });
+        } catch {
+          // sips not available (e.g. Linux CI) — skip compression
+        }
+      }
     }
   }
 
-  console.log(`   Copied ${copiedMedia} media files to public/strava-media/\n`);
+  console.log(`   Copied ${copiedMedia} media files to public/strava-media/ (compressed JPEGs)\n`);
 
   // 6. Compute stats
   const totalDistance = runLocations.reduce((sum, r) => sum + r.distance, 0);
