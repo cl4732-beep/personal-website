@@ -25,14 +25,22 @@ try {
   </div>
 ) : (
   <div class="strava-dashboard">
-    <WeeklyStats stats={stats} />
-    {activities.length > 0 && <ActivityChart activities={activities} />}
+    <div class="strava-left">
+      <WeeklyStats stats={stats} />
+      {activities.length > 0 && <ActivityChart activities={activities} />}
+    </div>
     {activities.length > 0 && <ActivityList activities={activities} />}
   </div>
 )}
 
 <style>
   .strava-dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3xl);
+  }
+
+  .strava-left {
     display: flex;
     flex-direction: column;
     gap: var(--space-3xl);
@@ -44,5 +52,12 @@ try {
     border-radius: 6px;
     color: var(--color-text-muted);
     font-style: italic;
+  }
+
+  @media (min-width: 900px) {
+    .strava-dashboard {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
   }
 </style>
