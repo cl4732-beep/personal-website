@@ -38,7 +38,8 @@ src/
 │       ├── hello-world.mdx
 │       ├── costco-and-framing.mdx
 │       ├── ramp-developing-the-ess-business-model.mdx
-│       └── paris.mdx
+│       ├── paris.mdx
+│       └── questions.mdx
 ├── layouts/
 │   ├── BaseLayout.astro        # Root HTML shell (head, meta, global styles)
 │   ├── PageLayout.astro        # Header + main container + Footer

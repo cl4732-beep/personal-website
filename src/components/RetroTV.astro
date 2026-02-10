@@ -527,11 +527,6 @@
     }
   }
 
-  // Run on initial load and on Astro page transitions
+  // astro:page-load fires on initial load and after client-side navigations
   document.addEventListener('astro:page-load', initRetroTV);
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initRetroTV);
-  } else {
-    initRetroTV();
-  }
 </script>
