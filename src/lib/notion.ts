@@ -119,4 +119,35 @@ export function groupBooksByMonth(books: Book[]): BooksByMonth[] {
     });
 }
 
-export type { Book, BooksByMonth };
+interface BooksByYear {
+  year: string;
+  read: Book[];
+  reading: Book[];
+}
+
+export function groupBooksByYear(books: Book[]): BooksByYear[] {
+  const currentYear = new Date().getFullYear().toString();
+  const map = new Map<string, { read: Book[]; reading: Book[] }>();
+
+  for (const book of books) {
+    if (book.status === 'Reading') {
+      // Currently reading books go under the current year
+      if (!map.has(currentYear)) {
+        map.set(currentYear, { read: [], reading: [] });
+      }
+      map.get(currentYear)!.reading.push(book);
+    } else if (book.status === 'Read' && book.dateFinished) {
+      const year = book.dateFinished.slice(0, 4);
+      if (!map.has(year)) {
+        map.set(year, { read: [], reading: [] });
+      }
+      map.get(year)!.read.push(book);
+    }
+  }
+
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([year, { read, reading }]) => ({ year, read, reading }));
+}
+
+export type { Book, BooksByMonth, BooksByYear };
