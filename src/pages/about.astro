@@ -25,20 +25,35 @@ import PageLayout from '../layouts/PageLayout.astro';
         <li id="fn-1">
           There is long-term satisfaction to be found not in attaining, but in becoming. Craftsmanship carries through a product and service — it has weight, it has meaning.
           <a href="https://www.youtube.com/watch?v=8VHOO_WvOf4" target="_blank" rel="noopener noreferrer">Inside Mizuno: Craft, Patience & Mastery</a>
-          <a href="#fnref-1" class="footnote-backref" aria-label="Back to reference 1">↩</a>
         </li>
         <li id="fn-2">
           Often attributed to Albert Einstein: "Compound interest is the eighth wonder of the world."
-          <a href="#fnref-2" class="footnote-backref" aria-label="Back to reference 2">↩</a>
         </li>
         <li id="fn-3">
           Popularized through "the butterfly effect," the idea that small changes can produce large consequences in complex systems.
-          <a href="#fnref-3" class="footnote-backref" aria-label="Back to reference 3">↩</a>
         </li>
       </ol>
     </footer>
   </section>
 </PageLayout>
+
+<script>
+  function initFootnoteScroll() {
+    document.querySelectorAll<HTMLAnchorElement>('sup a[href^="#fn-"]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = link.getAttribute('href')!.slice(1);
+        const target = document.getElementById(id);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+  }
+
+  initFootnoteScroll();
+  document.addEventListener('astro:after-swap', initFootnoteScroll);
+</script>
 
 <style>
   .about-page {
@@ -124,11 +139,6 @@ import PageLayout from '../layouts/PageLayout.astro';
 
   .footnotes a:hover {
     color: var(--color-text);
-  }
-
-  .footnote-backref {
-    margin-left: var(--space-xs);
-    font-style: normal;
   }
 
   @media (min-width: 640px) {
