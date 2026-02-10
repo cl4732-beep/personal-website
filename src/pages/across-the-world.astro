@@ -1,6 +1,7 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
 import RunMap from '../components/across-the-world/RunMap.astro';
+import MediaGallery from '../components/across-the-world/MediaGallery.astro';
 import { formatDistance } from '../lib/date';
 import { readRunLocationsCache } from '../lib/run-locations-cache';
 
@@ -10,9 +11,21 @@ const { runs, routes, stats } = data;
 // Date range
 const earliest = stats.dateRange?.[0] ? new Date(stats.dateRange[0]) : null;
 const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
+
+// Fun-fact: NYC to LA is ~3,944 km
+const totalKm = stats.totalDistance / 1000;
+const nycToLaTrips = (totalKm / 3944).toFixed(1);
+
+// Filter runs with media for gallery, sorted by date descending (newest first)
+const mediaRuns = runs
+  .filter((r) => r.media && r.media.length > 0)
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 ---
 
 <PageLayout title="Across the World — Clemente Lacerda" description="A map of every place I've run, tracked with Strava">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&display=swap" rel="stylesheet">
   <section class="atw-page">
     <div class="atw-header">
       <h1>Across the World</h1>
@@ -32,13 +45,14 @@ const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
     ) : (
       <>
         <div class="atw-stats">
+          <div class="stat stat-hero">
+            <span class="stat-value">{formatDistance(stats.totalDistance)}</span>
+            <span class="stat-label">Total Distance</span>
+            <span class="stat-fun">That's NYC to LA {nycToLaTrips}x over</span>
+          </div>
           <div class="stat">
             <span class="stat-value">{stats.totalRuns.toLocaleString()}</span>
             <span class="stat-label">Runs</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">{formatDistance(stats.totalDistance)}</span>
-            <span class="stat-label">Total Distance</span>
           </div>
           <div class="stat">
             <span class="stat-value">{stats.uniqueLocations}</span>
@@ -50,12 +64,20 @@ const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
           </div>
           {earliest && latest && (
             <div class="stat">
-              <span class="stat-value">{earliest.getFullYear()}–{latest.getFullYear()}</span>
-              <span class="stat-label">Years</span>
+              <span class="stat-value">{latest.getFullYear() - earliest.getFullYear() + 1}</span>
+              <span class="stat-label">Years Running</span>
             </div>
           )}
         </div>
+        {mediaRuns.length > 0 && (
+          <a href="#gallery" class="gallery-cta">
+            {mediaRuns.length} snapshots from the road ↓
+          </a>
+        )}
         <RunMap />
+        {mediaRuns.length > 0 && (
+          <MediaGallery mediaRuns={mediaRuns} />
+        )}
       </>
     )}
   </section>
@@ -93,6 +115,23 @@ const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
     gap: 2px;
   }
 
+  .stat-hero {
+    flex-basis: 100%;
+    margin-bottom: var(--space-xs);
+  }
+
+  .stat-hero .stat-value {
+    font-size: var(--text-2xl);
+  }
+
+  .stat-fun {
+    font-family: 'Caveat', cursive;
+    font-size: var(--text-base);
+    color: var(--color-accent);
+    display: block;
+    margin-top: 2px;
+  }
+
   .stat-value {
     font-size: var(--text-xl);
     font-weight: 600;
@@ -106,6 +145,24 @@ const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     font-variant: small-caps;
+  }
+
+  .gallery-cta {
+    display: inline-block;
+    margin-bottom: var(--space-lg);
+    font-size: var(--text-sm);
+    color: #8B2020;
+    letter-spacing: var(--tracking-wide);
+    font-variant: small-caps;
+    text-transform: lowercase;
+    text-decoration: none;
+    transition: color var(--transition-base);
+    background-image: none;
+  }
+
+  .gallery-cta:hover {
+    color: #6B1515;
+    background-image: none;
   }
 
   .atw-error {

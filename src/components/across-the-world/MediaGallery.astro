@@ -1,0 +1,527 @@
+---
+import { formatDistance } from '../../lib/date';
+
+interface RunWithMedia {
+  lat: number;
+  lng: number;
+  name: string;
+  date: string;
+  distance: number;
+  moving_time: number;
+  media: string[];
+  gear: string;
+}
+
+interface Props {
+  mediaRuns: RunWithMedia[];
+}
+
+const { mediaRuns } = Astro.props;
+
+// Pre-compute display data server-side
+const galleryItems = mediaRuns.map((run, index) => {
+  const images = run.media.filter(
+    (m) => m.endsWith('.jpg') || m.endsWith('.jpeg') || m.endsWith('.png')
+  );
+  const parsedDate = new Date(run.date);
+  const dateStr = Number.isNaN(parsedDate.getTime())
+    ? 'Unknown'
+    : parsedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return {
+    ...run,
+    images,
+    firstImage: images[0] || '',
+    extraCount: images.length - 1,
+    dateStr,
+    distanceStr: formatDistance(run.distance),
+    index,
+  };
+}).filter((item) => item.firstImage);
+
+// Pass data to client script
+const galleryData = JSON.stringify(
+  galleryItems.map((item) => ({
+    lat: item.lat,
+    lng: item.lng,
+    name: item.name,
+    dateStr: item.dateStr,
+    distanceStr: item.distanceStr,
+    images: item.images,
+    pace: item.distance > 0 && item.moving_time > 0
+      ? (() => {
+          const minPerKm = 1000 / (item.distance / item.moving_time) / 60;
+          const mins = Math.floor(minPerKm);
+          const secs = Math.round((minPerKm - mins) * 60);
+          return `${mins}:${secs.toString().padStart(2, '0')} /km`;
+        })()
+      : '',
+  }))
+);
+---
+
+<section class="gallery-section" id="gallery">
+  <h2 class="label">Snapshots from the Road</h2>
+
+  <div class="gallery-grid">
+    {galleryItems.map((item) => (
+      <button
+        class="gallery-card"
+        data-gallery-index={item.index}
+        type="button"
+        aria-label={`View photos from ${item.name}`}
+      >
+        <div class="card-frame">
+          <div class="card-pin"></div>
+          <img
+            src={`/${item.firstImage}`}
+            alt={item.name}
+            loading="lazy"
+            class="card-media"
+          />
+          {item.extraCount > 0 && (
+            <span class="card-count">+{item.extraCount}</span>
+          )}
+          <div class="card-caption">
+            <span class="caption-name">{item.name}</span>
+            <span class="caption-meta">{item.dateStr} &middot; {item.distanceStr}</span>
+          </div>
+        </div>
+      </button>
+    ))}
+  </div>
+</section>
+
+<!-- Data for client script -->
+<div id="galleryData" data-items={galleryData} hidden></div>
+
+<!-- Lightbox modal -->
+<div class="gallery-modal" id="galleryModal" role="dialog" aria-modal="true" aria-label="Run photos" hidden>
+  <div class="modal-backdrop" data-gallery-close></div>
+  <div class="modal-content">
+    <button class="modal-close" data-gallery-close aria-label="Close gallery" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M18 6L6 18" /><path d="M6 6l12 12" />
+      </svg>
+    </button>
+    <button class="modal-arrow modal-prev" data-gallery-prev aria-label="Previous photo" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+    <img class="modal-image" id="galleryModalImage" src="" alt="" />
+    <button class="modal-arrow modal-next" data-gallery-next aria-label="Next photo" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
+    <div class="modal-info" id="galleryModalInfo">
+      <p class="modal-label" id="galleryModalLabel"></p>
+      <p class="modal-meta" id="galleryModalMeta"></p>
+      <button class="modal-map-link" id="galleryMapLink" type="button">
+        View on map &rarr;
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* --- Section --- */
+  .gallery-section {
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-2xl);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .gallery-section h2 {
+    margin-bottom: var(--space-xl);
+  }
+
+  /* --- Masonry grid via CSS columns --- */
+  .gallery-grid {
+    columns: 1;
+    column-gap: var(--space-lg);
+  }
+
+  @media (min-width: 640px) {
+    .gallery-grid {
+      columns: 2;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .gallery-grid {
+      columns: 3;
+    }
+  }
+
+  /* --- Card button --- */
+  .gallery-card {
+    break-inside: avoid;
+    margin-bottom: var(--space-lg);
+    display: inline-block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    text-align: left;
+  }
+
+  /* Casual rotations */
+  .gallery-card:nth-child(4n+1) { transform: rotate(-1.5deg); }
+  .gallery-card:nth-child(4n+2) { transform: rotate(1deg); }
+  .gallery-card:nth-child(4n+3) { transform: rotate(-0.8deg); }
+  .gallery-card:nth-child(4n)   { transform: rotate(1.8deg); }
+
+  .gallery-card:hover {
+    transform: rotate(0deg) translateY(-6px) scale(1.02);
+    z-index: 2;
+    filter: brightness(1.02);
+  }
+
+  .gallery-card:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 6px;
+    border-radius: 2px;
+  }
+
+  /* --- Card frame (Polaroid-inspired) --- */
+  .card-frame {
+    background: #fff;
+    padding: 6px 6px 40px 6px;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.06);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .gallery-card:hover .card-frame {
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.14),
+      0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  /* --- Pushpin --- */
+  .card-pin {
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #C75050;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    z-index: 3;
+  }
+
+  /* --- Photo --- */
+  .card-media {
+    width: 100%;
+    display: block;
+    border-radius: 1px;
+  }
+
+  /* --- Multi-photo badge --- */
+  .card-count {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* --- Caption --- */
+  .card-caption {
+    position: absolute;
+    bottom: 6px;
+    left: 10px;
+    right: 10px;
+  }
+
+  .caption-name {
+    font-family: 'Caveat', 'Segoe Script', cursive;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #8B2020;
+    display: block;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .caption-meta {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--color-text-muted);
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* --- Modal --- */
+  .gallery-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gallery-modal[hidden] {
+    display: none;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  .modal-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    max-width: 90vw;
+    z-index: 1;
+  }
+
+  .modal-image {
+    max-height: 75vh;
+    max-width: min(600px, 70vw);
+    border-radius: 6px;
+    object-fit: contain;
+  }
+
+  .modal-info {
+    position: absolute;
+    bottom: -3.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .modal-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-family: var(--font-serif);
+    font-size: var(--text-sm);
+    margin: 0;
+  }
+
+  .modal-meta {
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    margin: 2px 0 0 0;
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .modal-map-link {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    cursor: pointer;
+    padding: 2px 0;
+    margin-top: 4px;
+    transition: color var(--transition-base);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .modal-map-link:hover {
+    color: #fff;
+  }
+
+  .modal-map-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: var(--space-xs);
+    transition: color var(--transition-base);
+  }
+
+  .modal-close:hover {
+    color: #fff;
+  }
+
+  .modal-close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .modal-arrow {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: var(--space-sm);
+    transition: color var(--transition-base);
+    flex-shrink: 0;
+  }
+
+  .modal-arrow:hover {
+    color: #fff;
+  }
+
+  .modal-arrow:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Hide prev/next when run has only 1 photo */
+  :global(.gallery-modal.single-photo) .modal-prev,
+  :global(.gallery-modal.single-photo) .modal-next {
+    visibility: hidden;
+  }
+
+  /* --- Reduced motion --- */
+  @media (prefers-reduced-motion: reduce) {
+    .gallery-card,
+    .gallery-card:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  interface GalleryItem {
+    lat: number;
+    lng: number;
+    name: string;
+    dateStr: string;
+    distanceStr: string;
+    images: string[];
+    pace: string;
+  }
+
+  function initGallery() {
+    const dataEl = document.getElementById('galleryData');
+    if (!dataEl) return;
+
+    let items: GalleryItem[];
+    try {
+      items = JSON.parse(dataEl.dataset.items!);
+    } catch {
+      return;
+    }
+
+    const modal = document.getElementById('galleryModal');
+    const modalImage = document.getElementById('galleryModalImage') as HTMLImageElement | null;
+    const modalLabel = document.getElementById('galleryModalLabel');
+    const modalMeta = document.getElementById('galleryModalMeta');
+    const mapLink = document.getElementById('galleryMapLink');
+    if (!modal || !modalImage || !modalLabel || !modalMeta || !mapLink) return;
+
+    let currentRunIndex = 0;
+    let currentPhotoIndex = 0;
+
+    function currentItem(): GalleryItem {
+      return items[currentRunIndex];
+    }
+
+    function showPhoto(runIndex: number, photoIndex: number) {
+      currentRunIndex = runIndex;
+      const item = currentItem();
+      currentPhotoIndex = Math.min(photoIndex, item.images.length - 1);
+
+      modalImage!.src = `/${item.images[currentPhotoIndex]}`;
+      modalImage!.alt = item.name;
+      modalLabel!.textContent = item.name;
+
+      const metaParts = [item.dateStr, item.distanceStr];
+      if (item.pace) metaParts.push(item.pace);
+      if (item.images.length > 1) {
+        metaParts.push(`${currentPhotoIndex + 1}/${item.images.length}`);
+      }
+      modalMeta!.textContent = metaParts.join(' · ');
+
+      // Toggle single-photo class to hide arrows
+      modal!.classList.toggle('single-photo', item.images.length <= 1);
+
+      modal!.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hide() {
+      modal!.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function nextPhoto() {
+      const item = currentItem();
+      if (item.images.length <= 1) return;
+      showPhoto(currentRunIndex, (currentPhotoIndex + 1) % item.images.length);
+    }
+
+    function prevPhoto() {
+      const item = currentItem();
+      if (item.images.length <= 1) return;
+      showPhoto(currentRunIndex, (currentPhotoIndex - 1 + item.images.length) % item.images.length);
+    }
+
+    // Card click -> open lightbox
+    document.querySelectorAll<HTMLButtonElement>('[data-gallery-index]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const index = Number(btn.dataset.galleryIndex);
+        showPhoto(index, 0);
+      });
+    });
+
+    // Close handlers
+    modal.querySelectorAll('[data-gallery-close]').forEach((el) => {
+      el.addEventListener('click', hide);
+    });
+
+    // Arrow handlers
+    modal.querySelector('[data-gallery-prev]')?.addEventListener('click', prevPhoto);
+    modal.querySelector('[data-gallery-next]')?.addEventListener('click', nextPhoto);
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (modal.hidden) return;
+      if (e.key === 'Escape') hide();
+      if (e.key === 'ArrowRight') nextPhoto();
+      if (e.key === 'ArrowLeft') prevPhoto();
+    });
+
+    // "View on map" button
+    mapLink?.addEventListener('click', () => {
+      const item = currentItem();
+      hide();
+      window.dispatchEvent(
+        new CustomEvent('gallery:focus-run', {
+          detail: { lat: item.lat, lng: item.lng, name: item.name },
+        })
+      );
+      document.getElementById('run-map')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', initGallery);
+</script>

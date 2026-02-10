@@ -126,17 +126,17 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
           zoomControl: true,
           worldCopyJump: false,
           minZoom: 2,
+          maxZoom: 20,
         });
 
         const worldBounds = L.latLngBounds([[-85, -180], [85, 180]]);
         map.setMaxBounds(worldBounds);
 
-        // Label-free basemap avoids mixed-language region labels (e.g. "Afrika")
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        // Alidade Smooth — muted desaturated pastels with built-in labels
+        L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
           attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-          subdomains: 'abcd',
-          maxZoom: 19,
+            '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+          maxZoom: 20,
           noWrap: true,
           bounds: worldBounds,
         }).addTo(map);
@@ -186,17 +186,16 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
           popupAnchor: [0, -8],
         });
 
-        // Pin with photo indicator
-        const photoPinIcon = L.divIcon({
-          className: 'run-pin',
-          html: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="7" cy="7" r="6" fill="#2D5F3F" stroke="#F8F7F4" stroke-width="2"/>
-            <circle cx="7" cy="7" r="2" fill="#F8F7F4"/>
-          </svg>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
-          popupAnchor: [0, -9],
-        });
+        // Circular photo thumbnail marker for runs with media
+        function createPhotoMarkerIcon(mediaSrc: string): L.DivIcon {
+          return L.divIcon({
+            className: 'run-pin-photo',
+            html: `<div class="photo-marker"><img src="/${mediaSrc}" alt="" loading="lazy" /></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+            popupAnchor: [0, -16],
+          });
+        }
 
         const clusterGroup = (L as any).markerClusterGroup({
           maxClusterRadius: 40,
@@ -216,6 +215,9 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
           },
         });
 
+        // Store markers by run key for gallery interaction
+        const markersByRun = new Map<string, L.Marker>();
+
         runs.forEach((run) => {
           const parsedDate = new Date(run.date);
           const date = Number.isNaN(parsedDate.getTime())
@@ -226,21 +228,28 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
               day: 'numeric',
             });
 
-          // Build photo HTML if media exists
+          // Build photo HTML if media exists — hero photo + thumbnail strip
           let photoHtml = '';
           if (run.media && run.media.length > 0) {
             const images = run.media
               .map((m) => sanitizePopupMediaPath(m))
               .filter((m): m is string => m !== null)
-              .filter((m) => m.endsWith('.jpg') || m.endsWith('.jpeg') || m.endsWith('.png'))
-              .slice(0, 3);
+              .filter((m) => m.endsWith('.jpg') || m.endsWith('.jpeg') || m.endsWith('.png'));
             if (images.length > 0) {
-              photoHtml = `<div class="run-popup-photos">${images
-                .map(
-                  (img) =>
-                    `<img src="/${img}" alt="${escapeHtml(run.name)}" loading="lazy" class="run-popup-photo" />`
-                )
-                .join('')}</div>`;
+              const hero = images[0];
+              photoHtml = `<div class="run-popup-media">`;
+              photoHtml += `<img src="/${hero}" alt="${escapeHtml(run.name)}" loading="lazy" class="run-popup-hero" />`;
+              if (images.length > 1) {
+                photoHtml += `<div class="run-popup-thumbs">`;
+                images.slice(1, 4).forEach((img) => {
+                  photoHtml += `<img src="/${img}" alt="" loading="lazy" class="run-popup-thumb" />`;
+                });
+                if (images.length > 4) {
+                  photoHtml += `<span class="run-popup-more">+${images.length - 4}</span>`;
+                }
+                photoHtml += `</div>`;
+              }
+              photoHtml += `</div>`;
             }
           }
 
@@ -267,11 +276,20 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
           `;
 
           const hasPhotos = run.media && run.media.length > 0;
-          const icon = hasPhotos ? photoPinIcon : pinIcon;
-          const marker = L.marker([run.lat, run.lng], { icon }).bindPopup(popup, {
-            maxWidth: 280,
-            minWidth: 180,
-          });
+          const firstImage = hasPhotos
+            ? run.media
+                .map((m) => sanitizePopupMediaPath(m))
+                .find((m): m is string => m !== null && (m.endsWith('.jpg') || m.endsWith('.jpeg') || m.endsWith('.png')))
+            : null;
+          const icon = firstImage ? createPhotoMarkerIcon(firstImage) : pinIcon;
+          const popupOptions = hasPhotos
+            ? { maxWidth: 320, minWidth: 260 }
+            : { maxWidth: 280, minWidth: 180 };
+          const marker = L.marker([run.lat, run.lng], { icon }).bindPopup(popup, popupOptions);
+
+          // Register for gallery lookup
+          const runKey = `${run.lat},${run.lng},${run.name}`;
+          markersByRun.set(runKey, marker);
 
           clusterGroup.addLayer(marker);
         });
@@ -301,6 +319,22 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
         map.on('click', () => {
           map.scrollWheelZoom.enable();
         });
+
+        // Listen for gallery focus events
+        window.addEventListener('gallery:focus-run', ((event: CustomEvent) => {
+          const { lat, lng, name } = event.detail;
+          const key = `${lat},${lng},${name}`;
+          const marker = markersByRun.get(key);
+
+          if (marker) {
+            map.setView([lat, lng], 13, { animate: true });
+            setTimeout(() => {
+              (clusterGroup as any).zoomToShowLayer(marker, () => {
+                marker.openPopup();
+              });
+            }, 300);
+          }
+        }) as EventListener);
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Unknown map data error';
@@ -335,13 +369,13 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
 
   @media (min-width: 640px) {
     #run-map {
-      height: 520px;
+      height: 480px;
     }
   }
 
   @media (min-width: 1100px) {
     #run-map {
-      height: 600px;
+      height: 560px;
     }
   }
 
@@ -349,6 +383,34 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
   :global(.run-pin) {
     background: transparent !important;
     border: none !important;
+  }
+
+  /* Circular photo thumbnail marker */
+  :global(.run-pin-photo) {
+    background: transparent !important;
+    border: none !important;
+  }
+
+  :global(.photo-marker) {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2.5px solid #2D5F3F;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  :global(.photo-marker:hover) {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(.photo-marker img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   /* Cluster styles */
@@ -426,35 +488,47 @@ const { dataUrl = '/data/run-locations.json' } = Astro.props;
     border-radius: 10px;
   }
 
-  /* Photo popup styles */
-  :global(.run-popup-photos) {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 8px;
+  /* Hero photo popup styles */
+  :global(.run-popup-media) {
+    margin: -10px -14px 10px -14px;
     overflow: hidden;
-    border-radius: 4px;
   }
 
-  :global(.run-popup-photo) {
+  :global(.run-popup-hero) {
     width: 100%;
-    max-height: 160px;
+    max-height: 200px;
     object-fit: cover;
-    border-radius: 4px;
     display: block;
   }
 
-  :global(.run-popup-photos .run-popup-photo:not(:first-child)) {
+  :global(.run-popup-thumbs) {
     display: none;
+    gap: 2px;
+    margin-top: 2px;
+  }
+
+  :global(.run-popup-thumb) {
+    flex: 1;
+    height: 48px;
+    object-fit: cover;
+    display: block;
+  }
+
+  :global(.run-popup-more) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 48px;
+    background: #F0EFEB;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #6B7280;
   }
 
   @media (min-width: 640px) {
-    :global(.run-popup-photos .run-popup-photo:not(:first-child)) {
-      display: block;
-    }
-
-    :global(.run-popup-photo) {
-      width: 50%;
-      max-height: 120px;
+    :global(.run-popup-thumbs) {
+      display: flex;
     }
   }
 
