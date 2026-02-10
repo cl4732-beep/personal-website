@@ -7,22 +7,35 @@ import PageLayout from '../layouts/PageLayout.astro';
     <h1>About</h1>
     <div class="about-content">
       <p>
-        I am the oldest of three siblings. I am passionate about learning, building, and craft.<sup>1</sup> I also believe that sharing the journey with people you admire, respect, and love makes any project and experience better.
+        I am the oldest of three siblings. I am passionate about learning, building, and craft.<sup><a href="#fn-1" id="fnref-1" aria-describedby="footnotes-label">1</a></sup> I also believe that sharing the journey with people you admire, respect, and love makes any project and experience better.
       </p>
       <p>
         I was born and raised in Brazil. I lived in Singapore while completing my Master's in Finance at NUS Business School, and I am now based in New York as a first-year MBA student at Columbia. Singapore expanded my self-awareness, challenged old beliefs, and reshaped my worldview. New York reinforced how much a city can shape your inner life. Environment, context, and people matter.
       </p>
       <p>
-        I believe that everything you do matters. Integrity is non-negotiable. There is no cheating reality. Compounding may be the closest thing we have to magic.<sup>2</sup> Small actions, repeated consistently over long periods, create outsized outcomes.<sup>3</sup>
+        I believe that everything you do matters. Integrity is non-negotiable. There is no cheating reality. Compounding may be the closest thing we have to magic.<sup><a href="#fn-2" id="fnref-2" aria-describedby="footnotes-label">2</a></sup> Small actions, repeated consistently over long periods, create outsized outcomes.<sup><a href="#fn-3" id="fnref-3" aria-describedby="footnotes-label">3</a></sup>
       </p>
       <p>
         I keep a small set of principles and a long list of curiosities.
       </p>
     </div>
-    <footer class="footnotes">
-      <p><span class="footnote-marker">1</span> There is long-term satisfaction to be found not in attaining, but in becoming. Craftsmanship carries through a product and service — it has weight, it has meaning. <a href="https://www.youtube.com/watch?v=8VHOO_WvOf4" target="_blank" rel="noopener noreferrer">Inside Mizuno: Craft, Patience & Mastery</a></p>
-      <p><span class="footnote-marker">2</span> Often attributed to Albert Einstein: "Compound interest is the eighth wonder of the world."</p>
-      <p><span class="footnote-marker">3</span> Popularized through "the butterfly effect," the idea that small changes can produce large consequences in complex systems.</p>
+    <footer class="footnotes" aria-labelledby="footnotes-label">
+      <h2 id="footnotes-label" class="visually-hidden">Footnotes</h2>
+      <ol class="footnotes-list">
+        <li id="fn-1">
+          There is long-term satisfaction to be found not in attaining, but in becoming. Craftsmanship carries through a product and service — it has weight, it has meaning.
+          <a href="https://www.youtube.com/watch?v=8VHOO_WvOf4" target="_blank" rel="noopener noreferrer">Inside Mizuno: Craft, Patience & Mastery</a>
+          <a href="#fnref-1" class="footnote-backref" aria-label="Back to reference 1">↩</a>
+        </li>
+        <li id="fn-2">
+          Often attributed to Albert Einstein: "Compound interest is the eighth wonder of the world."
+          <a href="#fnref-2" class="footnote-backref" aria-label="Back to reference 2">↩</a>
+        </li>
+        <li id="fn-3">
+          Popularized through "the butterfly effect," the idea that small changes can produce large consequences in complex systems.
+          <a href="#fnref-3" class="footnote-backref" aria-label="Back to reference 3">↩</a>
+        </li>
+      </ol>
     </footer>
   </section>
 </PageLayout>
@@ -60,6 +73,20 @@ import PageLayout from '../layouts/PageLayout.astro';
     vertical-align: super;
   }
 
+  .about-content sup a {
+    color: inherit;
+    background-image: none;
+  }
+
+  .about-content sup a:hover {
+    color: var(--color-text);
+    background-size: 0% 0;
+  }
+
+  .about-content sup a:focus-visible {
+    outline-offset: 1px;
+  }
+
   .footnotes {
     max-width: var(--content-max-width);
     margin-top: var(--space-3xl);
@@ -67,18 +94,25 @@ import PageLayout from '../layouts/PageLayout.astro';
     border-top: 1px solid var(--color-border);
   }
 
-  .footnotes p {
+  .footnotes-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .footnotes-list li {
     font-size: var(--text-sm);
     color: var(--color-text-muted);
     line-height: var(--leading-body);
     margin-bottom: var(--space-sm);
   }
 
-  .footnotes p:last-child {
+  .footnotes-list li:last-child {
     margin-bottom: 0;
   }
 
-  .footnote-marker {
+  .footnotes-list li::before {
+    content: counter(list-item) ". ";
     font-weight: 600;
     color: var(--color-accent);
   }
@@ -90,6 +124,11 @@ import PageLayout from '../layouts/PageLayout.astro';
 
   .footnotes a:hover {
     color: var(--color-text);
+  }
+
+  .footnote-backref {
+    margin-left: var(--space-xs);
+    font-style: normal;
   }
 
   @media (min-width: 640px) {

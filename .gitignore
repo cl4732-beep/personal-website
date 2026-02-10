@@ -20,8 +20,18 @@ pnpm-debug.log*
 # local cache
 .cache/
 
-# strava raw export data (large, processed into .cache/)
+# local data + prototypes (large / non-product assets)
+local-data/
 Strava_Export/
+StavaYearinSports/
+prototype/
+prototype_stravaclaude.html
+logo.png
+scripts/seed-run-locations.mjs
+
+# local AI tooling metadata
+.cursor/
+CLAUDE.md
 
 # macOS-specific files
 .DS_Store

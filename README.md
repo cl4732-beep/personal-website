@@ -68,10 +68,12 @@ src/
 | Route | Description |
 | :--- | :--- |
 | `/` | Homepage — hero section with intro, "Currently" status line, recent writings list, and a CSS-art Macintosh 128K that plays the first 2:03 of John Berger's "Ways of Seeing" (desktop only) |
+| `/about` | Personal background, beliefs, and principles |
 | `/writings` | Chronological list of all published writings |
 | `/writings/[slug]` | Individual writing post rendered from MDX |
 | `/books` | Books read and currently reading, powered by Notion. Organized by year with toggle buttons and a 3-column responsive grid |
 | `/strava` | Live training dashboard — two-column layout with running stats, weekly distance chart, activity breakdown doughnut, and recent activities list |
+| `/across-the-world` | Interactive map of run locations and saved routes, sourced from processed Strava export cache |
 | `/rss.xml` | RSS feed of all writings |
 
 ## External Integrations
@@ -85,6 +87,7 @@ Fetches athlete stats and recent activities via the Strava API. Uses OAuth refre
 - Scrollable recent activities list
 
 An OAuth callback endpoint exists at `/api/strava/callback` for the initial token exchange.
+It is disabled by default and must be explicitly enabled with environment variables.
 
 ### Notion
 
@@ -100,6 +103,8 @@ Create a `.env` file at the project root (see `.env.example`):
 | `STRAVA_CLIENT_SECRET` | Strava API application client secret |
 | `STRAVA_REFRESH_TOKEN` | Strava OAuth refresh token for the athlete |
 | `STRAVA_ATHLETE_ID` | Strava athlete numeric ID |
+| `STRAVA_OAUTH_CALLBACK_ENABLED` | Set to `true` only when you need to use `/api/strava/callback` |
+| `STRAVA_OAUTH_STATE` | Expected OAuth `state` value for callback validation |
 | `NOTION_TOKEN` | Notion internal integration token |
 | `NOTION_BOOKS_DATABASE_ID` | Notion database ID for the books collection |
 
@@ -113,6 +118,20 @@ All commands are run from the project root:
 | `npm run dev` | Start local dev server at `localhost:4321` |
 | `npm run build` | Build production site to `./dist/` |
 | `npm run preview` | Preview production build locally |
+| `npm run seed:locations` | Process Strava export into `.cache/run-locations.json`, `public/data/run-locations.json`, and `public/strava-media/` |
+| `npm run update:locations` | Fetch new runs from Strava API and merge into existing run cache |
+| `npm run validate:locations` | Validate map data file at `public/data/run-locations.json` |
+| `npm run build:strict` | Validate map data first, then run production build |
+
+## Across The World Data Pipeline
+
+The map at `/across-the-world` reads from `public/data/run-locations.json` (with `.cache/run-locations.json` as local fallback).
+
+1. Place the raw Strava export at `local-data/strava-export` (preferred) or `Strava_Export` (legacy fallback)
+2. Run `npm run seed:locations` once to build cache/data artifacts and copy referenced media
+3. Optionally run `npm run update:locations` to append newly recorded runs from the API
+
+Local heavy datasets and prototypes are intentionally kept out of git via `.gitignore`.
 
 ## Adding New Writings
 

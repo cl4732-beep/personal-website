@@ -16,6 +16,8 @@ const ROOT = join(__dirname, '..');
 const ENV_FILE = join(ROOT, '.env');
 const CACHE_DIR = join(ROOT, '.cache');
 const CACHE_FILE = join(CACHE_DIR, 'run-locations.json');
+const PUBLIC_DATA_DIR = join(ROOT, 'public', 'data');
+const PUBLIC_DATA_FILE = join(PUBLIC_DATA_DIR, 'run-locations.json');
 
 // Parse .env file
 const env = {};
@@ -72,13 +74,25 @@ async function fetchActivitiesAfter(token, afterTimestamp) {
 async function main() {
   // 1. Read existing cache
   let cache;
-  try {
-    cache = JSON.parse(readFileSync(CACHE_FILE, 'utf-8'));
-  } catch {
-    console.error('No existing cache found at', CACHE_FILE);
+  const cacheInputCandidates = [CACHE_FILE, PUBLIC_DATA_FILE];
+  let loadedFrom = null;
+  for (const candidate of cacheInputCandidates) {
+    try {
+      cache = JSON.parse(readFileSync(candidate, 'utf-8'));
+      loadedFrom = candidate;
+      break;
+    } catch {
+      // Try next location
+    }
+  }
+
+  if (!cache || !Array.isArray(cache.runs)) {
+    console.error('No valid run locations cache found.');
+    console.error('Checked:', cacheInputCandidates.join(', '));
     console.error('Run `npm run seed:locations` first to process the Strava export.');
     process.exit(1);
   }
+  console.log(`Loaded cache from ${loadedFrom}`);
 
   // 2. Find the latest date in the cache
   const dates = cache.runs.map((r) => new Date(r.date).getTime()).filter((d) => !isNaN(d));
@@ -154,9 +168,13 @@ async function main() {
 
   // 8. Write updated cache
   mkdirSync(CACHE_DIR, { recursive: true });
-  writeFileSync(CACHE_FILE, JSON.stringify(cache));
+  mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
+  const serialized = JSON.stringify(cache);
+  writeFileSync(CACHE_FILE, serialized);
+  writeFileSync(PUBLIC_DATA_FILE, serialized);
 
   console.log(`\nUpdated cache: ${cache.runs.length} total runs, ${(totalDistance / 1000).toFixed(0)} km`);
+  console.log(`Wrote ${CACHE_FILE} and ${PUBLIC_DATA_FILE}`);
   console.log('Done!');
 }
 

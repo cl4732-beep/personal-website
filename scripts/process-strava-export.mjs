@@ -4,11 +4,13 @@
  * Parses activities.csv, extracts GPS from FIT.gz/GPX files,
  * parses route GPX files, links media, and outputs a JSON cache.
  *
+ * Expected export location: local-data/strava-export
+ * Legacy export location is also supported: Strava_Export
+ *
  * Usage: node scripts/process-strava-export.mjs
  */
 
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
@@ -16,10 +18,33 @@ import FitParser from 'fit-file-parser';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const EXPORT_DIR = join(ROOT, 'Strava_Export');
 const CACHE_DIR = join(ROOT, '.cache');
 const CACHE_FILE = join(CACHE_DIR, 'run-locations.json');
+const PUBLIC_DATA_DIR = join(ROOT, 'public', 'data');
+const PUBLIC_DATA_FILE = join(PUBLIC_DATA_DIR, 'run-locations.json');
 const MEDIA_OUT = join(ROOT, 'public', 'strava-media');
+
+const EXPORT_DIR_CANDIDATES = [
+  process.env.STRAVA_EXPORT_DIR,
+  join(ROOT, 'local-data', 'strava-export'),
+  join(ROOT, 'Strava_Export'),
+].filter(Boolean);
+
+function resolveExportDir() {
+  for (const dir of EXPORT_DIR_CANDIDATES) {
+    if (existsSync(join(dir, 'activities.csv'))) {
+      return dir;
+    }
+  }
+
+  throw new Error(
+    'Could not find Strava export directory.\n' +
+      `Checked: ${EXPORT_DIR_CANDIDATES.join(', ')}\n` +
+      'Set STRAVA_EXPORT_DIR or place export under local-data/strava-export.'
+  );
+}
+
+const EXPORT_DIR = resolveExportDir();
 
 // ─── CSV Parser ────────────────────────────────────────────────────────
 
@@ -327,6 +352,7 @@ async function main() {
   // 7. Write cache
   console.log('6. Writing cache...');
   mkdirSync(CACHE_DIR, { recursive: true });
+  mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
 
   const output = {
     runs: runLocations,
@@ -334,9 +360,11 @@ async function main() {
     stats: stats,
   };
 
-  writeFileSync(CACHE_FILE, JSON.stringify(output));
+  const serialized = JSON.stringify(output);
+  writeFileSync(CACHE_FILE, serialized);
+  writeFileSync(PUBLIC_DATA_FILE, serialized);
   const sizeKB = (Buffer.byteLength(JSON.stringify(output)) / 1024).toFixed(0);
-  console.log(`   Saved to ${CACHE_FILE} (${sizeKB} KB)\n`);
+  console.log(`   Saved to ${CACHE_FILE} and ${PUBLIC_DATA_FILE} (${sizeKB} KB)\n`);
 
   // Summary
   console.log('=== Summary ===');

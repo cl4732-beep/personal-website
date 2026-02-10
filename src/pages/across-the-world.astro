@@ -2,21 +2,9 @@
 import PageLayout from '../layouts/PageLayout.astro';
 import RunMap from '../components/across-the-world/RunMap.astro';
 import { formatDistance } from '../lib/date';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readRunLocationsCache } from '../lib/run-locations-cache';
 
-// Read from the cached JSON (seeded from Strava export, updated via API)
-let data: { runs: any[]; routes: any[]; stats: any } = { runs: [], routes: [], stats: {} };
-let error = false;
-
-try {
-  const cachePath = join(process.cwd(), '.cache', 'run-locations.json');
-  data = JSON.parse(readFileSync(cachePath, 'utf-8'));
-} catch (e) {
-  error = true;
-  console.error('Run locations cache not found. Run `npm run seed:locations` first.');
-}
-
+const { data, error } = readRunLocationsCache();
 const { runs, routes, stats } = data;
 
 // Date range
@@ -33,9 +21,13 @@ const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
       </p>
     </div>
 
-    {error || runs.length === 0 ? (
+    {runs.length === 0 ? (
       <div class="atw-error">
-        <p>{error ? 'Map data is unavailable. Run `npm run seed:locations` to process Strava export.' : 'No run locations found.'}</p>
+        <p>
+          {error
+            ? 'Map data is unavailable. Run `npm run seed:locations` to process Strava export data.'
+            : 'No run locations found in the cache yet.'}
+        </p>
       </div>
     ) : (
       <>
@@ -63,7 +55,7 @@ const latest = stats.dateRange?.[1] ? new Date(stats.dateRange[1]) : null;
             </div>
           )}
         </div>
-        <RunMap runs={runs} routes={routes} />
+        <RunMap />
       </>
     )}
   </section>

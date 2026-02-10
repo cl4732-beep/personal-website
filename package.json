@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:strict": "npm run validate:locations && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "seed:locations": "node scripts/process-strava-export.mjs",
-    "update:locations": "node scripts/update-run-locations.mjs"
+    "update:locations": "node scripts/update-run-locations.mjs",
+    "validate:locations": "node scripts/validate-run-locations.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",

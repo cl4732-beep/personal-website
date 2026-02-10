@@ -1,37 +1,21 @@
 ---
-interface Run {
-  lat: number;
-  lng: number;
-  name: string;
-  date: string;
-  distance: number;
-  moving_time: number;
-  media: string[];
-  gear: string;
-}
-
-interface Route {
-  name: string;
-  coordinates: [number, number][];
-}
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 interface Props {
-  runs: Run[];
-  routes: Route[];
+  dataUrl?: string;
 }
 
-const { runs, routes } = Astro.props;
+const { dataUrl = '/data/run-locations.json' } = Astro.props;
 ---
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-
 <div class="map-wrapper">
-  <div id="run-map"></div>
+  <div id="run-map" data-map-url={dataUrl}></div>
+  <p id="run-map-error" class="map-error" hidden>
+    Map data could not be loaded right now.
+  </p>
 </div>
-
-<script id="map-data" type="application/json" set:html={JSON.stringify({ runs, routes })} />
 
 <script>
   import L from 'leaflet';
@@ -59,7 +43,18 @@ const { runs, routes } = Astro.props;
   }
 
   function escapeHtml(str: string): string {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function sanitizePopupMediaPath(path: string): string | null {
+    const normalized = path.trim().replace(/^\/+/, '');
+    if (!normalized || normalized.includes('..')) return null;
+    if (!/^strava-media\/[A-Za-z0-9._/-]+$/.test(normalized)) return null;
+    return normalized;
   }
 
   interface RunData {
@@ -78,190 +73,239 @@ const { runs, routes } = Astro.props;
     coordinates: [number, number][];
   }
 
+  interface MapData {
+    runs: RunData[];
+    routes: RouteData[];
+  }
+
+  function showMapError(message: string) {
+    const errorEl = document.getElementById('run-map-error');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.hidden = false;
+  }
+
+  function normalizeMapData(raw: unknown): MapData {
+    if (!raw || typeof raw !== 'object') {
+      return { runs: [], routes: [] };
+    }
+    const data = raw as Record<string, unknown>;
+    return {
+      runs: Array.isArray(data.runs) ? (data.runs as RunData[]) : [],
+      routes: Array.isArray(data.routes) ? (data.routes as RouteData[]) : [],
+    };
+  }
+
+  async function fetchMapData(url: string): Promise<MapData> {
+    const response = await fetch(url, { cache: 'force-cache' });
+    if (!response.ok) {
+      throw new Error(`Map data request failed (${response.status})`);
+    }
+    const json = await response.json();
+    return normalizeMapData(json);
+  }
+
   function initMap() {
-    const dataEl = document.getElementById('map-data');
-    if (!dataEl) return;
-
-    const { runs, routes }: { runs: RunData[]; routes: RouteData[] } = JSON.parse(
-      dataEl.textContent || '{"runs":[],"routes":[]}'
-    );
-
-    if (runs.length === 0) return;
-
     const mapEl = document.getElementById('run-map');
     if (!mapEl) return;
 
     // Prevent re-initialization after View Transitions
     if ((mapEl as any)._leaflet_id) return;
 
-    const map = L.map(mapEl, {
-      scrollWheelZoom: false,
-      zoomControl: true,
-    });
+    const mapDataUrl = (mapEl as HTMLElement).dataset.mapUrl || '/data/run-locations.json';
 
-    // CartoDB Positron — clean, muted tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(map);
-
-    // ── Route Polylines ──────────────────────────────────────────────
-    const routeLayers: L.Polyline[] = [];
-
-    routes.forEach((route) => {
-      if (route.coordinates.length < 2) return;
-
-      const polyline = L.polyline(route.coordinates as L.LatLngExpression[], {
-        color: '#2D5F3F',
-        weight: 2.5,
-        opacity: 0.5,
-        smoothFactor: 1,
-      }).addTo(map);
-
-      polyline.bindPopup(
-        `<div class="route-popup">
-          <strong class="route-popup-name">${escapeHtml(route.name)}</strong>
-          <span class="route-popup-type">Saved Route</span>
-        </div>`,
-        { className: 'route-popup-container' }
-      );
-
-      // Highlight on hover
-      polyline.on('mouseover', () => {
-        polyline.setStyle({ opacity: 0.9, weight: 4 });
-      });
-      polyline.on('mouseout', () => {
-        polyline.setStyle({ opacity: 0.5, weight: 2.5 });
-      });
-
-      routeLayers.push(polyline);
-    });
-
-    // ── Run Markers with Clustering ──────────────────────────────────
-
-    // Custom pin icon
-    const pinIcon = L.divIcon({
-      className: 'run-pin',
-      html: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="6" cy="6" r="5" fill="#2D5F3F" stroke="#F8F7F4" stroke-width="2"/>
-      </svg>`,
-      iconSize: [12, 12],
-      iconAnchor: [6, 6],
-      popupAnchor: [0, -8],
-    });
-
-    // Pin with photo indicator
-    const photoPinIcon = L.divIcon({
-      className: 'run-pin',
-      html: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="7" cy="7" r="6" fill="#2D5F3F" stroke="#F8F7F4" stroke-width="2"/>
-        <circle cx="7" cy="7" r="2" fill="#F8F7F4"/>
-      </svg>`,
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
-      popupAnchor: [0, -9],
-    });
-
-    const clusterGroup = (L as any).markerClusterGroup({
-      maxClusterRadius: 40,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      iconCreateFunction: function (cluster: any) {
-        const count = cluster.getChildCount();
-        let size = 'small';
-        if (count >= 50) size = 'large';
-        else if (count >= 10) size = 'medium';
-
-        return L.divIcon({
-          html: `<span>${count}</span>`,
-          className: `run-cluster run-cluster-${size}`,
-          iconSize: L.point(36, 36),
-        });
-      },
-    });
-
-    runs.forEach((run) => {
-      const date = new Date(run.date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-
-      // Build photo HTML if media exists
-      let photoHtml = '';
-      if (run.media && run.media.length > 0) {
-        const images = run.media
-          .filter((m) => m.endsWith('.jpg') || m.endsWith('.jpeg') || m.endsWith('.png'))
-          .slice(0, 3);
-        if (images.length > 0) {
-          photoHtml = `<div class="run-popup-photos">${images
-            .map(
-              (img) =>
-                `<img src="/${img}" alt="${escapeHtml(run.name)}" loading="lazy" class="run-popup-photo" />`
-            )
-            .join('')}</div>`;
+    fetchMapData(mapDataUrl)
+      .then(({ runs, routes }) => {
+        if (runs.length === 0) {
+          showMapError('No run locations available in map data.');
+          return;
         }
-      }
 
-      // Build gear tag
-      const gearHtml =
-        run.gear && run.gear.length > 0
-          ? `<span class="run-popup-gear">${escapeHtml(run.gear)}</span>`
-          : '';
+        const map = L.map(mapEl, {
+          scrollWheelZoom: false,
+          zoomControl: true,
+          worldCopyJump: false,
+          minZoom: 2,
+        });
 
-      const popup = `
-        <div class="run-popup">
-          ${photoHtml}
-          <strong class="run-popup-name">${escapeHtml(run.name)}</strong>
-          <span class="run-popup-date">${date}</span>
-          <div class="run-popup-stats">
-            <span>${formatDistance(run.distance)}</span>
-            <span class="run-popup-sep">&middot;</span>
-            <span>${formatDuration(run.moving_time)}</span>
-            <span class="run-popup-sep">&middot;</span>
-            <span>${formatPace(run.distance, run.moving_time)}</span>
-          </div>
-          ${gearHtml}
-        </div>
-      `;
+        const worldBounds = L.latLngBounds([[-85, -180], [85, 180]]);
+        map.setMaxBounds(worldBounds);
 
-      const hasPhotos = run.media && run.media.length > 0;
-      const icon = hasPhotos ? photoPinIcon : pinIcon;
-      const marker = L.marker([run.lat, run.lng], { icon }).bindPopup(popup, {
-        maxWidth: 280,
-        minWidth: 180,
+        // Label-free basemap avoids mixed-language region labels (e.g. "Afrika")
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 19,
+          noWrap: true,
+          bounds: worldBounds,
+        }).addTo(map);
+
+        // ── Route Polylines ──────────────────────────────────────────────
+        const routeLayers: L.Polyline[] = [];
+
+        routes.forEach((route) => {
+          if (route.coordinates.length < 2) return;
+
+          const polyline = L.polyline(route.coordinates as L.LatLngExpression[], {
+            color: '#2D5F3F',
+            weight: 2.5,
+            opacity: 0.5,
+            smoothFactor: 1,
+          }).addTo(map);
+
+          polyline.bindPopup(
+            `<div class="route-popup">
+              <strong class="route-popup-name">${escapeHtml(route.name)}</strong>
+              <span class="route-popup-type">Saved Route</span>
+            </div>`,
+            { className: 'route-popup-container' }
+          );
+
+          // Highlight on hover
+          polyline.on('mouseover', () => {
+            polyline.setStyle({ opacity: 0.9, weight: 4 });
+          });
+          polyline.on('mouseout', () => {
+            polyline.setStyle({ opacity: 0.5, weight: 2.5 });
+          });
+
+          routeLayers.push(polyline);
+        });
+
+        // ── Run Markers with Clustering ──────────────────────────────────
+
+        // Custom pin icon
+        const pinIcon = L.divIcon({
+          className: 'run-pin',
+          html: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="6" cy="6" r="5" fill="#2D5F3F" stroke="#F8F7F4" stroke-width="2"/>
+          </svg>`,
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
+          popupAnchor: [0, -8],
+        });
+
+        // Pin with photo indicator
+        const photoPinIcon = L.divIcon({
+          className: 'run-pin',
+          html: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="7" cy="7" r="6" fill="#2D5F3F" stroke="#F8F7F4" stroke-width="2"/>
+            <circle cx="7" cy="7" r="2" fill="#F8F7F4"/>
+          </svg>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+          popupAnchor: [0, -9],
+        });
+
+        const clusterGroup = (L as any).markerClusterGroup({
+          maxClusterRadius: 40,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          iconCreateFunction: function (cluster: any) {
+            const count = cluster.getChildCount();
+            let size = 'small';
+            if (count >= 50) size = 'large';
+            else if (count >= 10) size = 'medium';
+
+            return L.divIcon({
+              html: `<span>${count}</span>`,
+              className: `run-cluster run-cluster-${size}`,
+              iconSize: L.point(36, 36),
+            });
+          },
+        });
+
+        runs.forEach((run) => {
+          const parsedDate = new Date(run.date);
+          const date = Number.isNaN(parsedDate.getTime())
+            ? 'Unknown date'
+            : parsedDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            });
+
+          // Build photo HTML if media exists
+          let photoHtml = '';
+          if (run.media && run.media.length > 0) {
+            const images = run.media
+              .map((m) => sanitizePopupMediaPath(m))
+              .filter((m): m is string => m !== null)
+              .filter((m) => m.endsWith('.jpg') || m.endsWith('.jpeg') || m.endsWith('.png'))
+              .slice(0, 3);
+            if (images.length > 0) {
+              photoHtml = `<div class="run-popup-photos">${images
+                .map(
+                  (img) =>
+                    `<img src="/${img}" alt="${escapeHtml(run.name)}" loading="lazy" class="run-popup-photo" />`
+                )
+                .join('')}</div>`;
+            }
+          }
+
+          // Build gear tag
+          const gearHtml =
+            run.gear && run.gear.length > 0
+              ? `<span class="run-popup-gear">${escapeHtml(run.gear)}</span>`
+              : '';
+
+          const popup = `
+            <div class="run-popup">
+              ${photoHtml}
+              <strong class="run-popup-name">${escapeHtml(run.name)}</strong>
+              <span class="run-popup-date">${date}</span>
+              <div class="run-popup-stats">
+                <span>${formatDistance(run.distance)}</span>
+                <span class="run-popup-sep">&middot;</span>
+                <span>${formatDuration(run.moving_time)}</span>
+                <span class="run-popup-sep">&middot;</span>
+                <span>${formatPace(run.distance, run.moving_time)}</span>
+              </div>
+              ${gearHtml}
+            </div>
+          `;
+
+          const hasPhotos = run.media && run.media.length > 0;
+          const icon = hasPhotos ? photoPinIcon : pinIcon;
+          const marker = L.marker([run.lat, run.lng], { icon }).bindPopup(popup, {
+            maxWidth: 280,
+            minWidth: 180,
+          });
+
+          clusterGroup.addLayer(marker);
+        });
+
+        map.addLayer(clusterGroup);
+
+        // ── Fit Bounds ───────────────────────────────────────────────────
+        const allBounds = L.latLngBounds([]);
+
+        const markerBounds = clusterGroup.getBounds();
+        if (markerBounds.isValid()) {
+          allBounds.extend(markerBounds);
+        }
+
+        routeLayers.forEach((rl) => {
+          const rb = rl.getBounds();
+          if (rb.isValid()) {
+            allBounds.extend(rb);
+          }
+        });
+
+        if (allBounds.isValid()) {
+          map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 12 });
+        }
+
+        // Enable scroll zoom on first click
+        map.on('click', () => {
+          map.scrollWheelZoom.enable();
+        });
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Unknown map data error';
+        showMapError(`Map data could not be loaded: ${message}`);
       });
-
-      clusterGroup.addLayer(marker);
-    });
-
-    map.addLayer(clusterGroup);
-
-    // ── Fit Bounds ───────────────────────────────────────────────────
-    const allBounds = L.latLngBounds([]);
-
-    const markerBounds = clusterGroup.getBounds();
-    if (markerBounds.isValid()) {
-      allBounds.extend(markerBounds);
-    }
-
-    routeLayers.forEach((rl) => {
-      const rb = rl.getBounds();
-      if (rb.isValid()) {
-        allBounds.extend(rb);
-      }
-    });
-
-    if (allBounds.isValid()) {
-      map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 12 });
-    }
-
-    // Enable scroll zoom on first click
-    map.on('click', () => {
-      map.scrollWheelZoom.enable();
-    });
   }
 
   // Initialize on page load and after View Transitions
@@ -279,6 +323,14 @@ const { runs, routes } = Astro.props;
   #run-map {
     width: 100%;
     height: 420px;
+  }
+
+  .map-error {
+    padding: var(--space-md);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    border-top: 1px solid var(--color-border);
+    margin: 0;
   }
 
   @media (min-width: 640px) {
