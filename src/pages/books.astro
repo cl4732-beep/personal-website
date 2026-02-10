@@ -23,7 +23,7 @@ const totalRead = finishedBooks.length;
   <section class="books-page">
     <h1>Books</h1>
     <p class="page-intro">
-      {totalRead} books read and counting.
+      <strong>{totalRead}</strong> books read and counting.
     </p>
 
     {error ? (
@@ -81,6 +81,11 @@ const totalRead = finishedBooks.length;
     margin-bottom: var(--space-3xl);
   }
 
+  .page-intro strong {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
   .books-timeline {
     display: flex;
     flex-direction: column;
@@ -89,6 +94,8 @@ const totalRead = finishedBooks.length;
 
   .month-section h2 {
     margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .book-list {
@@ -105,15 +112,21 @@ const totalRead = finishedBooks.length;
     border-bottom: 1px solid var(--color-border);
     gap: var(--space-md);
     margin-bottom: 0;
+    transition: color var(--transition-base);
   }
 
   .book-item:last-child {
     border-bottom: none;
   }
 
+  .book-item:hover .book-name {
+    color: var(--color-accent);
+  }
+
   .book-name {
     font-weight: 500;
     color: var(--color-text);
+    transition: color var(--transition-base);
   }
 
   .book-author {
@@ -129,10 +142,22 @@ const totalRead = finishedBooks.length;
 
   .wishlist-section h2 {
     margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .wishlist-section .book-name {
+    font-style: italic;
   }
 
   .error-state {
     color: var(--color-text-muted);
     font-style: italic;
+  }
+
+  @media (min-width: 640px) {
+    .books-page {
+      padding-top: var(--space-4xl);
+    }
   }
 </style>

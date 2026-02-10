@@ -102,7 +102,8 @@ const typeData = JSON.stringify({ labels: typeLabels, values: typeValues });
     const typeCanvas = document.getElementById('type-chart') as HTMLCanvasElement;
     if (typeCanvas) {
       const data = JSON.parse(typeCanvas.dataset.chart!);
-      const colors = [accentColor, surfaceColor, textColor, borderColor];
+      // Green palette variations for doughnut segments
+      const colors = [accentColor, '#1B4332', '#6EBF8B', '#A3D9B5', surfaceColor, borderColor];
       new Chart(typeCanvas, {
         type: 'doughnut',
         data: {

@@ -68,10 +68,18 @@ const activityIcons: Record<string, string> = {
     padding: var(--space-md) 0;
     border-bottom: 1px solid var(--color-border);
     margin-bottom: 0;
+    transition: background-color var(--transition-base);
   }
 
   .activity-item:last-child {
     border-bottom: none;
+  }
+
+  .activity-item:hover {
+    background-color: var(--color-surface);
+    margin-inline: calc(-1 * var(--space-sm));
+    padding-inline: var(--space-sm);
+    border-radius: 4px;
   }
 
   .activity-header {
@@ -90,11 +98,18 @@ const activityIcons: Record<string, string> = {
     font-weight: 500;
     font-size: var(--text-sm);
     color: var(--color-text);
+    background-image: none;
     flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: color var(--transition-base);
+  }
+
+  .activity-name:hover {
+    color: var(--color-accent);
+    background-size: 0% 0;
   }
 
   .activity-date {
@@ -111,7 +126,7 @@ const activityIcons: Record<string, string> = {
 
   .activity-stat {
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     letter-spacing: 0;
   }

@@ -124,6 +124,12 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
 }
 
 body {
@@ -154,6 +160,16 @@ textarea,
 select {
   font: inherit;
   color: inherit;
+}
+
+/* Global focus-visible baseline */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* --- Utilities --- */

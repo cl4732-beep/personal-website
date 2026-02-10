@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.astro.build)",
+      "Bash(npx astro add:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(gh auth setup-git:*)",
+      "WebFetch(domain:personal-website-topaz-ten-38.vercel.app)",
+      "Bash(npm uninstall:*)"
+    ]
+  }
+}

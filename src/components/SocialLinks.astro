@@ -46,15 +46,22 @@ const links = [
   .social-links a {
     color: var(--color-text-muted);
     background-image: none;
-    transition: color var(--transition-base);
+    transition: color var(--transition-base), transform var(--transition-base);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--space-xs);
+    border-radius: 4px;
   }
 
   .social-links a:hover {
     color: var(--color-text);
     background-size: 0% 0;
+    transform: translateY(-1px);
+  }
+
+  .social-links a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 </style>

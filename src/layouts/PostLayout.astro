@@ -48,6 +48,10 @@ const formattedUpdated = frontmatter.updated?.toLocaleDateString('en-US', {
 </PageLayout>
 
 <style>
+  .post {
+    padding-top: var(--space-3xl);
+  }
+
   .post-header {
     margin-bottom: var(--space-3xl);
   }
@@ -73,12 +77,25 @@ const formattedUpdated = frontmatter.updated?.toLocaleDateString('en-US', {
   }
 
   .tag {
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     background-color: var(--color-surface);
     padding: var(--space-xs) var(--space-sm);
-    border-radius: 3px;
+    border-radius: 4px;
     font-family: var(--font-mono);
-    letter-spacing: 0;
+    letter-spacing: var(--tracking-wide);
+    text-transform: lowercase;
+    transition: color var(--transition-base), background-color var(--transition-base);
+  }
+
+  .tag:hover {
+    color: var(--color-accent);
+    background-color: var(--color-border);
+  }
+
+  @media (min-width: 640px) {
+    .post {
+      padding-top: var(--space-4xl);
+    }
   }
 </style>

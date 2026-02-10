@@ -48,4 +48,10 @@ const posts = (await getCollection('writings'))
     color: var(--color-text-muted);
     font-style: italic;
   }
+
+  @media (min-width: 640px) {
+    .writings-page {
+      padding-top: var(--space-4xl);
+    }
+  }
 </style>

@@ -39,6 +39,12 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
     background-size: 0% 0;
   }
 
+  .post-card:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
   .post-card:last-child {
     border-bottom: none;
   }
