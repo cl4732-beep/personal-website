@@ -44,6 +44,7 @@ try {
     display: flex;
     flex-direction: column;
     gap: var(--space-3xl);
+    min-width: 0;
   }
 
   .strava-error {
@@ -54,7 +55,7 @@ try {
     font-style: italic;
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 1100px) {
     .strava-dashboard {
       grid-template-columns: 1fr 1fr;
       align-items: start;
