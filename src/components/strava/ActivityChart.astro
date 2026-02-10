@@ -7,9 +7,10 @@ interface Props {
 
 const { activities } = Astro.props;
 
-// Group activities by week for the bar chart
+// Group running activities by week for the bar chart
 const weeklyMap = new Map<string, number>();
 for (const activity of activities) {
+  if (activity.type !== 'Run') continue;
   const date = new Date(activity.start_date_local);
   // Get the Monday of the week
   const day = date.getDay();
@@ -37,7 +38,7 @@ const typeData = JSON.stringify({ labels: typeLabels, values: typeValues });
 
 <div class="activity-charts">
   <div class="chart-section">
-    <h3 class="label">Weekly distance (km)</h3>
+    <h3 class="label">Running weekly distance (km)</h3>
     <div class="chart-container">
       <canvas id="weekly-chart" data-chart={weeklyData}></canvas>
     </div>
