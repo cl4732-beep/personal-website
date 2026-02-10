@@ -71,8 +71,16 @@ export async function getBooks(): Promise<Book[]> {
         props['Book Name']?.rich_text?.[0]?.plain_text ??
         '';
 
+      const authorProp = props['Author'];
       const author =
-        props['Author']?.rich_text?.[0]?.plain_text ?? '';
+        authorProp?.rich_text?.[0]?.plain_text ??
+        authorProp?.select?.name ??
+        authorProp?.multi_select?.map((s: any) => s.name).join(', ') ??
+        authorProp?.title?.[0]?.plain_text ??
+        authorProp?.people?.[0]?.name ??
+        authorProp?.rollup?.array?.[0]?.title?.[0]?.plain_text ??
+        authorProp?.formula?.string ??
+        '';
 
       const status =
         props['Status']?.select?.name ??
