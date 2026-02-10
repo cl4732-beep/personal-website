@@ -20,7 +20,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,16 +47,6 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 
     <ViewTransitions />
 
-    <!-- Inline theme script to prevent FOUC -->
-    <script is:inline>
-      (function () {
-        const stored = localStorage.getItem('theme');
-        const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light';
-        document.documentElement.setAttribute('data-theme', stored || preferred);
-      })();
-    </script>
   </head>
   <body>
     <slot />

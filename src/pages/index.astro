@@ -10,8 +10,7 @@ const posts = (await getCollection('writings'))
 
 <PageLayout title="Clemente Lacerda">
   <section class="hero">
-    <span class="hero-label label">Welcome</span>
-    <h1>Clemente Lacerda</h1>
+    <h1 class="hero-label label">Welcome</h1>
     <p class="intro">
       I write about things I find interesting and share what I'm working on.
       This is a place for my writings, ideas, and a live dashboard of my training on Strava.
@@ -52,22 +51,15 @@ const posts = (await getCollection('writings'))
 
   .hero-label {
     display: block;
-    margin-bottom: var(--space-md);
-    color: var(--color-accent);
-  }
-
-  .hero h1 {
-    font-size: var(--text-3xl);
-    line-height: var(--leading-tight);
-    letter-spacing: var(--tracking-heading);
     margin-bottom: var(--space-lg);
+    color: var(--color-accent);
   }
 
   .intro {
     font-size: var(--text-lg);
     color: var(--color-text-muted);
     line-height: var(--leading-body);
-    max-width: 38rem;
+    max-width: var(--content-max-width);
   }
 
   .recent-writings {
@@ -82,6 +74,7 @@ const posts = (await getCollection('writings'))
     list-style: none;
     padding: 0;
     margin: 0 0 var(--space-xl) 0;
+    max-width: var(--content-max-width);
   }
 
   .post-list li {
@@ -139,10 +132,6 @@ const posts = (await getCollection('writings'))
     .hero {
       padding-top: var(--space-5xl);
       padding-bottom: var(--space-3xl);
-    }
-
-    .hero h1 {
-      font-size: var(--text-5xl);
     }
   }
 </style>
