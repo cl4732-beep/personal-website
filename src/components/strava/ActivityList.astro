@@ -54,6 +54,10 @@ const activityIcons: Record<string, string> = {
 </div>
 
 <style>
+  .activity-list {
+    overflow: hidden;
+  }
+
   .activity-list h3 {
     margin-bottom: var(--space-lg);
   }
@@ -62,6 +66,22 @@ const activityIcons: Record<string, string> = {
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  ul::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  ul::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ul::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 2px;
   }
 
   .activity-item {
@@ -77,8 +97,6 @@ const activityIcons: Record<string, string> = {
 
   .activity-item:hover {
     background-color: var(--color-surface);
-    margin-inline: calc(-1 * var(--space-sm));
-    padding-inline: var(--space-sm);
     border-radius: 4px;
   }
 

@@ -66,6 +66,10 @@ const trophyData = JSON.stringify(trophies);
   /* --- Trophy Case container --- */
   .trophy-case {
     margin-top: var(--space-xl);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .trophy-case h3 {
@@ -75,9 +79,10 @@ const trophyData = JSON.stringify(trophies);
   .polaroid-row {
     display: flex;
     align-items: flex-start;
+    justify-content: flex-start;
     gap: var(--space-md);
-    overflow-x: auto;
-    padding: var(--space-lg) var(--space-xs) var(--space-md);
+    overflow-x: hidden;
+    padding: var(--space-lg) 0 var(--space-md) 0;
     -webkit-overflow-scrolling: touch;
   }
 
