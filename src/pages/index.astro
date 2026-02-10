@@ -1,5 +1,6 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import RetroTV from '../components/RetroTV.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('writings'))
@@ -10,12 +11,17 @@ const posts = (await getCollection('writings'))
 
 <PageLayout title="Clemente Lacerda">
   <section class="hero">
-    <h1 class="hero-label label">Welcome</h1>
-    <p class="intro">
-      I write about things I find interesting and share what I'm working on.
-      This is a place for my writings, ideas, and a live dashboard of my training on Strava.
-    </p>
-    <p class="currently">Currently: MBA Student at Columbia Business School, Class of 2027</p>
+    <div class="hero-content">
+      <h1 class="hero-label label">Welcome</h1>
+      <p class="intro">
+        I write about things I find interesting and share what I'm working on.
+        This is a place for my writings, ideas, and a live dashboard of my training on Strava.
+      </p>
+      <p class="currently">Currently: MBA Student at Columbia Business School, Class of 2027</p>
+    </div>
+    <div class="hero-tv">
+      <RetroTV />
+    </div>
   </section>
 
   <hr />
@@ -46,8 +52,18 @@ const posts = (await getCollection('writings'))
 
 <style>
   .hero {
+    position: relative;
     padding-top: var(--space-4xl);
     padding-bottom: var(--space-2xl);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-tv {
+    display: none;
   }
 
   .hero-label {
@@ -144,6 +160,15 @@ const posts = (await getCollection('writings'))
     .hero {
       padding-top: var(--space-5xl);
       padding-bottom: var(--space-3xl);
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .hero-tv {
+      display: block;
+      position: absolute;
+      right: 0;
+      top: var(--space-5xl);
     }
   }
 </style>

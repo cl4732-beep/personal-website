@@ -1,0 +1,537 @@
+---
+/**
+ * Macintosh 128K — CSS-art Apple Macintosh that plays a YouTube video
+ * when the user clicks the power button. Starts in "off" state.
+ */
+---
+
+<div class="macintosh" aria-label="Macintosh 128K playing Ways of Seeing by John Berger">
+  <!-- Mac Body -->
+  <div class="mac-body">
+    <!-- Top section with screen -->
+    <div class="mac-top">
+      <!-- Screen bezel -->
+      <div class="mac-bezel">
+        <!-- CRT screen -->
+        <div class="mac-screen">
+          <!-- Off-state overlay -->
+          <div class="screen-overlay" id="screenOverlay">
+            <div class="power-line" id="powerLine"></div>
+          </div>
+          <!-- Scan-line effect (visible when on) -->
+          <div class="scanlines"></div>
+          <!-- YouTube player target -->
+          <div id="ytPlayerContainer">
+            <div id="ytPlayer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom section below screen -->
+    <div class="mac-bottom">
+      <!-- Apple logo + Macintosh label row -->
+      <div class="mac-branding">
+        <span class="apple-logo"></span>
+        <span class="mac-label">Macintosh</span>
+      </div>
+
+      <!-- Floppy disk slot -->
+      <div class="floppy-slot"></div>
+
+      <!-- Power button -->
+      <button
+        class="mac-power"
+        id="tvToggle"
+        aria-label="Turn Macintosh on/off"
+        aria-pressed="false"
+        type="button"
+      >
+        <svg class="power-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 2v6" />
+          <path d="M17.66 6.34a8 8 0 1 1-11.32 0" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Base / foot -->
+  <div class="mac-base"></div>
+</div>
+
+<style>
+  /* ---- Macintosh Container ---- */
+  .macintosh {
+    --mac-width: 440px;
+    --mac-beige: #E8DCC8;
+    --mac-beige-dark: #D4C5A9;
+    --mac-beige-shadow: #BFB399;
+    --mac-beige-highlight: #F2EDE2;
+    --mac-bezel-color: #1C1C1C;
+    --mac-screen-bg: #0a0a0a;
+    width: var(--mac-width);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+
+  /* ---- Mac Body ---- */
+  .mac-body {
+    width: 100%;
+    background: linear-gradient(
+      180deg,
+      var(--mac-beige-highlight) 0%,
+      var(--mac-beige) 8%,
+      var(--mac-beige) 85%,
+      var(--mac-beige-dark) 100%
+    );
+    border-radius: 12px 12px 4px 4px;
+    padding: 24px 28px 20px 28px;
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.25),
+      0 2px 8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset -2px 0 4px rgba(0, 0, 0, 0.04),
+      inset 2px 0 4px rgba(0, 0, 0, 0.04);
+    position: relative;
+  }
+
+  /* Subtle vertical ridges on the sides */
+  .mac-body::before,
+  .mac-body::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    width: 6px;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 0, 0.04) 3px,
+      rgba(0, 0, 0, 0.04) 5px
+    );
+    border-radius: 2px;
+  }
+
+  .mac-body::before {
+    left: 8px;
+  }
+
+  .mac-body::after {
+    right: 8px;
+  }
+
+  /* ---- Top Section (Screen) ---- */
+  .mac-top {
+    margin-bottom: 18px;
+  }
+
+  /* ---- Screen Bezel ---- */
+  .mac-bezel {
+    background: var(--mac-bezel-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow:
+      inset 0 2px 8px rgba(0, 0, 0, 0.7),
+      0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* ---- CRT Screen ---- */
+  .mac-screen {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    background: var(--mac-screen-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  /* YouTube player fills the screen */
+  #ytPlayerContainer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  #ytPlayerContainer :global(iframe) {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* ---- Off-state overlay ---- */
+  .screen-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: radial-gradient(
+      ellipse at center,
+      #1a1a1a 0%,
+      #0d0d0d 60%,
+      #050505 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease 0.5s;
+  }
+
+  .screen-overlay.turning-on {
+    transition: opacity 0.3s ease 0.5s;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .screen-overlay.is-off {
+    opacity: 1;
+    pointer-events: auto;
+    transition: none;
+  }
+
+  /* CRT power-on line */
+  .power-line {
+    width: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 15px 4px rgba(255, 255, 255, 0.4);
+    border-radius: 1px;
+    opacity: 0;
+  }
+
+  .power-line.animate {
+    animation: crt-power-on 0.6s ease-out forwards;
+  }
+
+  @keyframes crt-power-on {
+    0% {
+      width: 0;
+      height: 2px;
+      opacity: 1;
+    }
+    40% {
+      width: 80%;
+      height: 2px;
+      opacity: 1;
+    }
+    70% {
+      width: 100%;
+      height: 30%;
+      opacity: 0.8;
+    }
+    100% {
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+    }
+  }
+
+  /* CRT power-off shrink */
+  .screen-overlay.turning-off {
+    opacity: 1;
+    pointer-events: auto;
+    transition: none;
+  }
+
+  .power-line.animate-off {
+    animation: crt-power-off 0.4s ease-in forwards;
+  }
+
+  @keyframes crt-power-off {
+    0% {
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+    }
+    30% {
+      width: 100%;
+      height: 2px;
+      opacity: 1;
+    }
+    70% {
+      width: 40%;
+      height: 2px;
+      opacity: 1;
+    }
+    100% {
+      width: 0;
+      height: 2px;
+      opacity: 0;
+    }
+  }
+
+  /* ---- Scan-lines (visible when Mac is on) ---- */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.06) 2px,
+      rgba(0, 0, 0, 0.06) 4px
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease 0.5s;
+  }
+
+  .macintosh.is-on .scanlines {
+    opacity: 1;
+  }
+
+  /* Slight screen curvature glow when on */
+  .macintosh.is-on .mac-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: 4px;
+    box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.03);
+    pointer-events: none;
+  }
+
+  /* ---- Bottom Section ---- */
+  .mac-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+  }
+
+  /* ---- Branding ---- */
+  .mac-branding {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .apple-logo {
+    display: inline-block;
+    width: 14px;
+    height: 17px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 814 1000'%3E%3Cpath fill='%23888' d='M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57.8-155.5-127.4c-58.4-81.8-105.6-209-105.6-329.2C0 413 60.3 279.5 159.7 209.2c49.3-34.8 113-58.4 180.8-58.4 67.8 0 127.4 44.3 170.2 44.3 39.5 0 113.3-47 191.7-47 31 0 142.2 2.6 215.7 97.8zM554.3 170.5c31-36.9 52.3-88 52.3-139.1 0-7.1-.6-14.3-1.9-20.1-49.9 1.9-108.8 33.5-144.4 75.2-25.6 29.7-52.3 80.1-52.3 132.2 0 7.8.6 15.6 1.3 18.2 2.6.6 6.5 1.3 10.4 1.3 44.9-.1 100.8-30.2 134.6-67.7z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.55;
+  }
+
+  .mac-label {
+    font-family: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #7A7263;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---- Floppy Disk Slot ---- */
+  .floppy-slot {
+    width: 56%;
+    height: 5px;
+    background: linear-gradient(
+      to bottom,
+      #A89B86 0%,
+      #8A7E6C 50%,
+      #A89B86 100%
+    );
+    border-radius: 1px;
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.3),
+      0 1px 0 rgba(255, 255, 255, 0.2);
+    align-self: flex-end;
+    margin-right: 20px;
+  }
+
+  /* ---- Power Button ---- */
+  .mac-power {
+    position: absolute;
+    bottom: 2px;
+    left: 20px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(
+      145deg,
+      var(--mac-beige) 0%,
+      var(--mac-beige-dark) 100%
+    );
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    color: #8A7E6C;
+  }
+
+  .mac-power:hover {
+    transform: scale(1.08);
+    color: #5C5347;
+  }
+
+  .mac-power:active {
+    transform: scale(0.94);
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.3),
+      0 0 0 rgba(255, 255, 255, 0);
+  }
+
+  .power-icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .mac-power:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  /* Power LED when on */
+  .mac-power[aria-pressed="true"] {
+    color: #4ade80;
+  }
+
+  .mac-power[aria-pressed="true"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.35);
+    pointer-events: none;
+  }
+
+  /* ---- Base / Foot ---- */
+  .mac-base {
+    width: calc(100% + 16px);
+    height: 10px;
+    background: linear-gradient(
+      to bottom,
+      var(--mac-beige-dark) 0%,
+      var(--mac-beige-shadow) 60%,
+      #A89B86 100%
+    );
+    border-radius: 0 0 6px 6px;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+</style>
+
+<script>
+  function initRetroTV() {
+    const toggle = document.getElementById('tvToggle') as HTMLButtonElement | null;
+    const overlay = document.getElementById('screenOverlay');
+    const powerLine = document.getElementById('powerLine');
+    const macContainer = document.querySelector('.macintosh');
+    let player: any = null;
+    let isOn = false;
+    let playerReady = false;
+
+    // Load YouTube IFrame API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+
+    // YouTube API calls this global when ready
+    (window as any).onYouTubeIframeAPIReady = () => {
+      player = new (window as any).YT.Player('ytPlayer', {
+        videoId: 'P-4LwAuTw7k',
+        playerVars: {
+          start: 0,
+          end: 123,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          showinfo: 0,
+          fs: 0,
+          disablekb: 1,
+          iv_load_policy: 3,
+          playsinline: 1,
+        },
+        events: {
+          onReady: () => {
+            playerReady = true;
+          },
+          onStateChange: (event: any) => {
+            // If video ended, turn Mac off
+            if (event.data === (window as any).YT.PlayerState.ENDED) {
+              turnOff();
+            }
+          },
+        },
+      });
+    };
+
+    function turnOn() {
+      if (!overlay || !powerLine || !macContainer || !toggle) return;
+      isOn = true;
+      toggle.setAttribute('aria-pressed', 'true');
+      macContainer.classList.add('is-on');
+
+      // CRT power-on animation
+      overlay.classList.remove('is-off', 'turning-off');
+      overlay.classList.add('turning-on');
+      powerLine.classList.remove('animate-off');
+      powerLine.classList.add('animate');
+
+      // Start video after animation
+      setTimeout(() => {
+        if (playerReady && player) {
+          player.seekTo(0, true);
+          player.playVideo();
+        }
+      }, 500);
+    }
+
+    function turnOff() {
+      if (!overlay || !powerLine || !macContainer || !toggle) return;
+      isOn = false;
+      toggle.setAttribute('aria-pressed', 'false');
+      macContainer.classList.remove('is-on');
+
+      // Pause video immediately
+      if (playerReady && player) {
+        player.pauseVideo();
+      }
+
+      // CRT power-off animation
+      overlay.classList.remove('turning-on');
+      overlay.classList.add('turning-off');
+      powerLine.classList.remove('animate');
+      powerLine.classList.add('animate-off');
+
+      // After animation, reset to off state
+      setTimeout(() => {
+        overlay.classList.remove('turning-off');
+        overlay.classList.add('is-off');
+        powerLine.classList.remove('animate-off');
+      }, 450);
+    }
+
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        if (isOn) {
+          turnOff();
+        } else {
+          turnOn();
+        }
+      });
+    }
+  }
+
+  // Run on initial load and on Astro page transitions
+  document.addEventListener('astro:page-load', initRetroTV);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRetroTV);
+  } else {
+    initRetroTV();
+  }
+</script>
