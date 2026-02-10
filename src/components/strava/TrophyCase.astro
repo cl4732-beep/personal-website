@@ -1,0 +1,398 @@
+---
+const trophies = [
+  { src: '/images/strava/year-in-sport-2025-hours.jpeg', label: '2025 — 672 Hours Active · Top 0.4%', caption: "672 hours active '25" },
+  { src: '/images/strava/year-in-sport-2025-days.jpeg', label: '2025 — 347 Days Active · Top 0.4%', caption: "347 days active '25" },
+  { src: '/images/strava/year-in-sport-2025-profile.jpeg', label: '2025 — 5,018 Lifetime Activities · Top 0.1%', caption: "top 0.1% '25" },
+  { src: '/images/strava/year-in-sport-2024-time.jpeg', label: '2024 — 507 Total Hours · Top 1%', caption: "507 total hours '24" },
+  { src: '/images/strava/year-in-sport-2024-days.jpeg', label: '2024 — 337 Days Active · Top 1%', caption: "337 days active '24" },
+];
+
+const trophyData = JSON.stringify(trophies);
+---
+
+<!-- Google Font for handwriting captions -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="trophy-case">
+  <h3 class="label">Small Wins Daily = Big Results</h3>
+  <div class="polaroid-row">
+    {trophies.map((trophy, i) => (
+      <button
+        class="polaroid"
+        data-trophy-index={i}
+        aria-label={`View ${trophy.label}`}
+        type="button"
+      >
+        <div class="tape"></div>
+        <div class="polaroid-frame">
+          <img src={trophy.src} alt={trophy.label} loading="lazy" />
+          <span class="polaroid-caption">{trophy.caption}</span>
+        </div>
+      </button>
+    ))}
+  </div>
+</div>
+
+<!-- Hidden data element for script access -->
+<div id="trophyData" data-trophies={trophyData} hidden></div>
+
+<!-- Carousel modal -->
+<div class="trophy-modal" id="trophyModal" role="dialog" aria-modal="true" aria-label="Trophy case gallery" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-content">
+    <button class="modal-close" data-close aria-label="Close gallery" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M18 6L6 18" /><path d="M6 6l12 12" />
+      </svg>
+    </button>
+    <button class="modal-arrow modal-prev" data-prev aria-label="Previous image" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+    <img class="modal-image" id="trophyModalImage" src="" alt="" />
+    <button class="modal-arrow modal-next" data-next aria-label="Next image" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
+    <p class="modal-label" id="trophyModalLabel"></p>
+  </div>
+</div>
+
+<style>
+  /* --- Trophy Case container --- */
+  .trophy-case {
+    margin-top: var(--space-xl);
+  }
+
+  .trophy-case h3 {
+    margin-bottom: var(--space-md);
+  }
+
+  .polaroid-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    overflow-x: auto;
+    padding: var(--space-lg) var(--space-xs) var(--space-md);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .polaroid-row::-webkit-scrollbar {
+    height: 3px;
+  }
+
+  .polaroid-row::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .polaroid-row::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 2px;
+  }
+
+  /* --- Polaroid button --- */
+  .polaroid {
+    flex-shrink: 0;
+    position: relative;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease, filter 0.3s ease;
+  }
+
+  /* Casual rotations */
+  .polaroid:nth-child(1) { transform: rotate(-3deg); }
+  .polaroid:nth-child(2) { transform: rotate(2.5deg); }
+  .polaroid:nth-child(3) { transform: rotate(-1.5deg); }
+  .polaroid:nth-child(4) { transform: rotate(3deg); }
+  .polaroid:nth-child(5) { transform: rotate(-2deg); }
+
+  .polaroid:hover {
+    transform: rotate(0deg) translateY(-6px) scale(1.03);
+    z-index: 2;
+    filter: brightness(1.02);
+  }
+
+  .polaroid:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 6px;
+    border-radius: 2px;
+  }
+
+  /* --- Polaroid frame --- */
+  .polaroid-frame {
+    background: #fff;
+    padding: 8px 8px 38px 8px;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.06);
+    position: relative;
+  }
+
+  .polaroid:hover .polaroid-frame {
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.14),
+      0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .polaroid-frame img {
+    display: block;
+    width: 90px;
+    height: auto;
+  }
+
+  /* Vary image sizes slightly for organic feel */
+  .polaroid:nth-child(1) .polaroid-frame img { width: 95px; }
+  .polaroid:nth-child(2) .polaroid-frame img { width: 82px; }
+  .polaroid:nth-child(3) .polaroid-frame img { width: 88px; }
+  .polaroid:nth-child(4) .polaroid-frame img { width: 78px; }
+  .polaroid:nth-child(5) .polaroid-frame img { width: 85px; }
+
+  /* --- Handwritten caption --- */
+  .polaroid-caption {
+    position: absolute;
+    bottom: 8px;
+    left: 10px;
+    right: 10px;
+    font-family: 'Caveat', 'Segoe Script', cursive;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #8B2020;
+    text-align: left;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  /* --- Tape strips (pure CSS) --- */
+  .tape {
+    position: absolute;
+    z-index: 3;
+    width: 44px;
+    height: 16px;
+    background: rgba(230, 195, 60, 0.55);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    pointer-events: none;
+  }
+
+  /* Semi-transparent texture */
+  .tape::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    );
+  }
+
+  /* Varied tape positions and angles per polaroid */
+  .polaroid:nth-child(1) .tape {
+    top: -6px;
+    left: 12px;
+    transform: rotate(-12deg);
+    width: 48px;
+  }
+
+  .polaroid:nth-child(2) .tape {
+    top: -7px;
+    right: 8px;
+    left: auto;
+    transform: rotate(8deg);
+    width: 42px;
+  }
+
+  .polaroid:nth-child(3) .tape {
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    width: 50px;
+  }
+
+  .polaroid:nth-child(4) .tape {
+    top: -8px;
+    left: 6px;
+    transform: rotate(15deg);
+    width: 40px;
+    background: rgba(200, 200, 200, 0.45);
+  }
+
+  .polaroid:nth-child(5) .tape {
+    top: -6px;
+    right: 5px;
+    left: auto;
+    transform: rotate(-10deg);
+    width: 46px;
+  }
+
+  /* --- Modal --- */
+  .trophy-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .trophy-modal[hidden] {
+    display: none;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  .modal-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    max-width: 90vw;
+    z-index: 1;
+  }
+
+  .modal-image {
+    max-height: 85vh;
+    max-width: min(400px, 70vw);
+    border-radius: 6px;
+    object-fit: contain;
+  }
+
+  .modal-label {
+    position: absolute;
+    bottom: -2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.8);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    letter-spacing: var(--tracking-wide);
+    margin: 0;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: var(--space-xs);
+    transition: color var(--transition-base);
+  }
+
+  .modal-close:hover {
+    color: #fff;
+  }
+
+  .modal-close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .modal-arrow {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: var(--space-sm);
+    transition: color var(--transition-base);
+    flex-shrink: 0;
+  }
+
+  .modal-arrow:hover {
+    color: #fff;
+  }
+
+  .modal-arrow:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .polaroid,
+    .polaroid:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  function initTrophyCase() {
+    const dataEl = document.getElementById('trophyData');
+    if (!dataEl) return;
+    const trophies = JSON.parse(dataEl.dataset.trophies!);
+
+    const modal = document.getElementById('trophyModal');
+    const modalImage = document.getElementById('trophyModalImage') as HTMLImageElement | null;
+    const modalLabel = document.getElementById('trophyModalLabel');
+    if (!modal || !modalImage || !modalLabel) return;
+
+    let currentIndex = 0;
+
+    function show(index: number) {
+      currentIndex = index;
+      const trophy = trophies[index];
+      modalImage!.src = trophy.src;
+      modalImage!.alt = trophy.label;
+      modalLabel!.textContent = trophy.label;
+      modal!.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hide() {
+      modal!.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function next() {
+      show((currentIndex + 1) % trophies.length);
+    }
+
+    function prev() {
+      show((currentIndex - 1 + trophies.length) % trophies.length);
+    }
+
+    // Frame click handlers
+    document.querySelectorAll<HTMLButtonElement>('[data-trophy-index]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        show(Number(btn.dataset.trophyIndex));
+      });
+    });
+
+    // Close handlers
+    modal.querySelectorAll('[data-close]').forEach((el) => {
+      el.addEventListener('click', hide);
+    });
+
+    // Arrow handlers
+    modal.querySelector('[data-prev]')?.addEventListener('click', prev);
+    modal.querySelector('[data-next]')?.addEventListener('click', next);
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (modal.hidden) return;
+      if (e.key === 'Escape') hide();
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft') prev();
+    });
+  }
+
+  initTrophyCase();
+  document.addEventListener('astro:after-swap', initTrophyCase);
+</script>
