@@ -11,7 +11,7 @@ let error = false;
 try {
   [stats, activities] = await Promise.all([
     getAthleteStats(),
-    getRecentActivities(1, 15),
+    getRecentActivities(1, 60),
   ]);
 } catch (e) {
   error = true;
