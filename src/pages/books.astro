@@ -63,7 +63,7 @@ const defaultYear = years[0] ?? new Date().getFullYear().toString();
                     {group.reading.map((book) => (
                       <li class="book-card">
                         <span class="book-title">{book.name}</span>
-                        <span class="book-author">{book.author}</span>
+                        <span class="book-author">{book.author}{book.isAudiobook && ' [Audiobook]'}</span>
                       </li>
                     ))}
                   </ul>
@@ -77,7 +77,7 @@ const defaultYear = years[0] ?? new Date().getFullYear().toString();
                     {group.read.map((book) => (
                       <li class="book-card">
                         <span class="book-title">{book.name}</span>
-                        <span class="book-author">{book.author}</span>
+                        <span class="book-author">{book.author}{book.isAudiobook && ' [Audiobook]'}</span>
                       </li>
                     ))}
                   </ul>

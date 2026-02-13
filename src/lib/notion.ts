@@ -3,6 +3,7 @@ interface Book {
   author: string;
   status: string;
   dateFinished: string | null;
+  isAudiobook: boolean;
 }
 
 interface BooksByMonth {
@@ -91,7 +92,9 @@ export async function getBooks(): Promise<Book[]> {
         props['Date Finished']?.date?.start ?? null;
 
       if (name) {
-        results.push({ name, author, status, dateFinished });
+        const isAudiobook = name.includes('🎧');
+        const cleanName = isAudiobook ? name.replace(/\s*🎧\s*/g, '').trim() : name;
+        results.push({ name: cleanName, author, status, dateFinished, isAudiobook });
       }
     }
 
