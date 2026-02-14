@@ -53,6 +53,31 @@
   margin: var(--space-xl) 0;
 }
 
+/* --- Image rows (side-by-side) --- */
+.prose .image-row {
+  display: flex;
+  gap: var(--space-md);
+  margin: var(--space-xl) 0;
+}
+
+.prose .image-row img {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1;
+  margin: 0;
+  object-fit: cover;
+  background-color: var(--color-surface);
+}
+
+.prose .image-row--single {
+  justify-content: center;
+}
+
+.prose .image-row--single img {
+  flex: none;
+  width: 50%;
+}
+
 /* --- Blockquotes in prose --- */
 .prose blockquote {
   margin: var(--space-xl) 0;
