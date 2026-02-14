@@ -1,5 +1,6 @@
 ---
 import PageLayout from './PageLayout.astro';
+import SubscribeForm from '../components/SubscribeForm.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -44,8 +45,23 @@ const formattedUpdated = frontmatter.updated?.toLocaleDateString('en-US', {
     <div class="prose">
       <slot />
     </div>
+    <SubscribeForm />
   </article>
 </PageLayout>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('t');
+  if (token) {
+    const slug = window.location.pathname.replace('/writings/', '').replace(/\/$/, '');
+    fetch('/api/track', {
+      method: 'POST',
+      body: JSON.stringify({ token, slug }),
+      headers: { 'Content-Type': 'application/json' },
+    }).catch(() => {});
+    history.replaceState(null, '', window.location.pathname);
+  }
+</script>
 
 <style>
   .post {

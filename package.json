@@ -16,6 +16,7 @@
     "@astrojs/mdx": "^4.3.13",
     "@astrojs/rss": "^4.0.15",
     "@astrojs/vercel": "^9.0.4",
+    "@supabase/supabase-js": "^2.95.3",
     "astro": "^5.17.1",
     "chart.js": "^4.5.1",
     "fit-file-parser": "^2.3.3",

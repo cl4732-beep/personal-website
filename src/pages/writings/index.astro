@@ -1,6 +1,7 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
 import PostCard from '../../components/PostCard.astro';
+import SubscribeForm from '../../components/SubscribeForm.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('writings'))
@@ -22,6 +23,7 @@ const posts = (await getCollection('writings'))
     ) : (
       <p class="empty-state">Nothing here yet. Check back soon.</p>
     )}
+    <SubscribeForm />
   </section>
 </PageLayout>
 
