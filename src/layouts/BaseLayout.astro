@@ -1,5 +1,6 @@
 ---
 import { ViewTransitions } from 'astro:transitions';
+import Analytics from '@vercel/analytics/astro';
 import '../styles/global.css';
 import '../styles/typography.css';
 import '../styles/prose.css';
@@ -46,7 +47,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml" />
 
     <ViewTransitions />
-
+    <Analytics />
   </head>
   <body>
     <slot />
