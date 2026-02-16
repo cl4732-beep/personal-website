@@ -8,6 +8,9 @@ export default defineConfig({
   output: 'static',
   adapter: vercel(),
   integrations: [mdx()],
+  build: {
+    inlineStylesheets: 'always',
+  },
   markdown: {
     shikiConfig: {
       theme: 'css-variables',
