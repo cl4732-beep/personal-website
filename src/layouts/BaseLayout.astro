@@ -47,13 +47,11 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <!-- RSS -->
     <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml" />
 
-    <ViewTransitions />
+    <ViewTransitions fallback="swap" />
     <Analytics />
 
     <script is:inline>
-      document.addEventListener('astro:before-swap', (e) => {
-        e.viewTransition?.skipTransition();
-      });
+      document.startViewTransition = undefined;
     </script>
   </head>
   <body>
