@@ -52,6 +52,7 @@
           <path d="M17.66 6.34a8 8 0 1 1-11.32 0" />
         </svg>
       </button>
+      <span class="press-start" id="pressStart">Press to Start</span>
     </div>
   </div>
 
@@ -408,6 +409,29 @@
     pointer-events: none;
   }
 
+  /* ---- Press to Start CTA ---- */
+  .press-start {
+    position: absolute;
+    bottom: 6px;
+    left: 54px;
+    font-family: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #3B82F6;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    animation: blink-cta 1.2s ease-in-out infinite;
+  }
+
+  .press-start.hidden {
+    display: none;
+  }
+
+  @keyframes blink-cta {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
   /* ---- Base / Foot ---- */
   .mac-base {
     width: calc(100% + 16px);
@@ -428,20 +452,17 @@
 <script>
   function initRetroTV() {
     const toggle = document.getElementById('tvToggle') as HTMLButtonElement | null;
+    if (!toggle) return; // Not on homepage
+
     const overlay = document.getElementById('screenOverlay');
     const powerLine = document.getElementById('powerLine');
     const macContainer = document.querySelector('.macintosh');
+    const pressStart = document.getElementById('pressStart');
     let player: any = null;
     let isOn = false;
     let playerReady = false;
 
-    // Load YouTube IFrame API
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-
-    // YouTube API calls this global when ready
-    (window as any).onYouTubeIframeAPIReady = () => {
+    function createPlayer() {
       player = new (window as any).YT.Player('ytPlayer', {
         videoId: 'P-4LwAuTw7k',
         playerVars: {
@@ -461,20 +482,33 @@
             playerReady = true;
           },
           onStateChange: (event: any) => {
-            // If video ended, turn Mac off
             if (event.data === (window as any).YT.PlayerState.ENDED) {
               turnOff();
             }
           },
         },
       });
-    };
+    }
+
+    // Check if YouTube API is already loaded (return navigation)
+    if ((window as any).YT && (window as any).YT.Player) {
+      createPlayer();
+    } else {
+      // First visit — load API script and use callback
+      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+      }
+      (window as any).onYouTubeIframeAPIReady = createPlayer;
+    }
 
     function turnOn() {
       if (!overlay || !powerLine || !macContainer || !toggle) return;
       isOn = true;
       toggle.setAttribute('aria-pressed', 'true');
       macContainer.classList.add('is-on');
+      pressStart?.classList.add('hidden');
 
       // CRT power-on animation
       overlay.classList.remove('is-off', 'turning-off');
@@ -496,6 +530,7 @@
       isOn = false;
       toggle.setAttribute('aria-pressed', 'false');
       macContainer.classList.remove('is-on');
+      pressStart?.classList.remove('hidden');
 
       // Pause video immediately
       if (playerReady && player) {
@@ -516,15 +551,13 @@
       }, 450);
     }
 
-    if (toggle) {
-      toggle.addEventListener('click', () => {
-        if (isOn) {
-          turnOff();
-        } else {
-          turnOn();
-        }
-      });
-    }
+    toggle.addEventListener('click', () => {
+      if (isOn) {
+        turnOff();
+      } else {
+        turnOn();
+      }
+    });
   }
 
   // astro:page-load fires on initial load and after client-side navigations
