@@ -49,6 +49,12 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 
     <ViewTransitions />
     <Analytics />
+
+    <script is:inline>
+      document.addEventListener('astro:before-swap', (e) => {
+        e.viewTransition?.skipTransition();
+      });
+    </script>
   </head>
   <body>
     <slot />

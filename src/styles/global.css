@@ -172,12 +172,6 @@ select {
   border-width: 0;
 }
 
-/* Instant view transitions — no crossfade, no flash */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0s;
-}
-
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
