@@ -85,6 +85,7 @@
 }
 
 html {
+  background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -149,6 +150,12 @@ select {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* Instant view transitions — no crossfade, no flash */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0s;
 }
 
 /* Reduced motion */

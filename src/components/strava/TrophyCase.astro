@@ -107,6 +107,10 @@ const trophyData = JSON.stringify(trophies);
     border: none;
     padding: 0;
     cursor: pointer;
+    transition: none;
+  }
+
+  .trophy-case.is-motion-ready .polaroid {
     transition: transform 0.3s ease, filter 0.3s ease;
   }
 
@@ -341,7 +345,18 @@ const trophyData = JSON.stringify(trophies);
   function initTrophyCase() {
     const dataEl = document.getElementById('trophyData');
     if (!dataEl) return;
+    const trophyCase = document.getElementById('trophyCase') ?? document.querySelector('.trophy-case') as HTMLElement | null;
     const trophies = JSON.parse(dataEl.dataset.trophies!);
+
+    // Motion-gate: enable transitions after DOM has settled (prevents wiggle on navigation)
+    if (trophyCase && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      trophyCase.classList.remove('is-motion-ready');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          trophyCase.classList.add('is-motion-ready');
+        });
+      });
+    }
 
     const modal = document.getElementById('trophyModal');
     const modalImage = document.getElementById('trophyModalImage') as HTMLImageElement | null;

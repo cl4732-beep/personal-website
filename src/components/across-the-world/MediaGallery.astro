@@ -164,8 +164,12 @@ const galleryData = JSON.stringify(
     border: none;
     padding: 0;
     cursor: pointer;
-    transition: transform 0.3s ease, filter 0.3s ease;
+    transition: none;
     text-align: left;
+  }
+
+  .gallery-section.is-motion-ready .gallery-card {
+    transition: transform 0.3s ease, filter 0.3s ease;
   }
 
   /* Casual rotations */
@@ -420,6 +424,17 @@ const galleryData = JSON.stringify(
   function initGallery() {
     const dataEl = document.getElementById('galleryData');
     if (!dataEl) return;
+
+    // Motion-gate: enable transitions after DOM has settled (prevents wiggle on navigation)
+    const gallerySection = document.getElementById('gallery');
+    if (gallerySection && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gallerySection.classList.remove('is-motion-ready');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          gallerySection.classList.add('is-motion-ready');
+        });
+      });
+    }
 
     let items: GalleryItem[];
     try {
