@@ -1,0 +1,93 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+---
+
+<PageLayout title="Projects — Clemente Lacerda" description="Personal projects by Clemente Lacerda.">
+  <section class="projects-page">
+    <h1>Projects</h1>
+    <p class="projects-intro">Things I build to scratch my own itch.</p>
+
+    <ul class="project-list">
+      <li class="project-card">
+        <div class="project-header">
+          <a href="/projects/tracklist" class="project-name">Tracklist</a>
+          <span class="project-status">In Development</span>
+        </div>
+        <p class="project-description">Extract tracklists from DJ sets on YouTube and export matched songs to Spotify. Paste a link, get your playlist.</p>
+        <div class="project-links">
+          <a href="/projects/tracklist/scope" class="project-link">Product Scope</a>
+        </div>
+      </li>
+    </ul>
+  </section>
+</PageLayout>
+
+<style>
+  .projects-page h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .projects-intro {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3xl);
+    line-height: var(--leading-relaxed);
+  }
+
+  .project-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .project-card {
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .project-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-xs);
+  }
+
+  .project-name {
+    font-size: var(--text-xl);
+    font-weight: 500;
+  }
+
+  .project-status {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    background-color: var(--color-surface);
+    padding: 2px var(--space-sm);
+    border-radius: 3px;
+  }
+
+  .project-description {
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-md);
+    line-height: var(--leading-relaxed);
+  }
+
+  .project-links {
+    display: flex;
+    gap: var(--space-lg);
+  }
+
+  .project-link {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .project-link:hover {
+    color: var(--color-accent);
+  }
+
+
+</style>

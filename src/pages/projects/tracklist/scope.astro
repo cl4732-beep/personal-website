@@ -1,0 +1,1246 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+---
+
+<PageLayout title="Tracklist — Product Scope" description="Product scope document for the Tracklist project — extracting tracklists from DJ sets on YouTube and exporting them to Spotify.">
+  <section class="scope-page">
+    <p class="scope-breadcrumb"><a href="/projects">Projects</a> / <a href="/projects/tracklist">Tracklist</a></p>
+
+    <header class="scope-hero">
+      <h1>Tracklist</h1>
+      <p class="scope-tagline">Extract tracklists from DJ sets on YouTube.<br />Export matched songs to Spotify.</p>
+      <div class="scope-meta">
+        <span class="scope-badge">In Development</span>
+        <span class="scope-date">Started February 2026</span>
+      </div>
+    </header>
+
+    <div class="scope-content">
+
+      <nav class="scope-toc" aria-label="Table of contents">
+        <ol>
+          <li><a href="#the-problem">The Problem</a></li>
+          <li><a href="#the-insight">The Insight</a></li>
+          <li><a href="#who-its-for">Who It's For</a></li>
+          <li><a href="#evidence">Evidence</a></li>
+          <li><a href="#what-tracklist-does">What Tracklist Does</a></li>
+          <li><a href="#key-features">Key Features</a></li>
+          <li><a href="#key-flows">Key Flows</a></li>
+          <li><a href="#design-decisions">Design Decisions</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#non-goals">Non-Goals</a></li>
+          <li><a href="#status">Status</a></li>
+        </ol>
+      </nav>
+
+      <details class="scope-section" open id="the-problem">
+        <summary><h2>The Problem</h2></summary>
+        <p>You hear a track in a DJ set that moves you. You want to find it, save it, listen to it again. But the set is two hours long, the track has no Shazam match, and the description — if you're lucky — has a wall of text with timestamps buried in it.</p>
+        <p>The gap between hearing a song in a set and having it in your library is too wide. Most people never cross it.</p>
+      </details>
+
+      <details class="scope-section" open id="the-insight">
+        <summary><h2>The Insight</h2></summary>
+        <blockquote class="scope-quote">
+          Most DJ set videos on YouTube already contain structured tracklists — in the description or in the comments. The data is there. It just needs to be extracted, matched, and delivered.
+        </blockquote>
+
+        <h3>Why this matters for the product</h3>
+        <ul class="scope-insight-list">
+          <li>The demand is not generic &ldquo;music discovery&rdquo; &mdash; it is specific retrieval demand tied to exact moments in long-form sets.</li>
+          <li>User behavior indicates friction: listeners manually search comments, forums, and external tracklist sites.</li>
+          <li>A URL-first extraction product maps directly to this behavior and can reduce multi-step manual effort to a single action.</li>
+        </ul>
+
+        <h3>Investment-relevant signal</h3>
+        <ul class="scope-insight-list">
+          <li>The problem appears across multiple communities, genres, and event brands.</li>
+          <li>The request pattern is persistent and recurring over time, not concentrated in one thread.</li>
+          <li>A large share of harvested comments remain high intent after stricter filtering, indicating real pain rather than weak engagement chatter.</li>
+        </ul>
+      </details>
+
+      <details class="scope-section" open id="who-its-for">
+        <summary><h2>Who It's For</h2></summary>
+        <div class="scope-users">
+          <div class="scope-user">
+            <h3>Primary</h3>
+            <p>People who listen to DJ sets on YouTube and want the tracks on Spotify. They hear something they love in a two-hour mix and don't want to lose it.</p>
+          </div>
+          <div class="scope-user">
+            <h3>Secondary</h3>
+            <p>Collectors building deep libraries across genres. Runners curating long-run playlists from live sets. DJs who want to share their own tracklists in a playable format.</p>
+          </div>
+          <div class="scope-user">
+            <h3>Why it matters</h3>
+            <p>Time saved — minutes instead of hours of manual searching. Memory — capture tracks before you forget them. Taste compounding — your library grows with every set you listen to.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="scope-section" id="evidence">
+        <summary><h2>Evidence</h2></summary>
+        <p>People already want this. They ask for it in YouTube comments, Reddit threads, and music forums — over and over. We collected 1,024 comments expressing demand for tracklists, track IDs, and playlists from DJ sets. After strict filtering for high-intent signals, 273 remain as direct proof of demand. Data collected February 17, 2026.</p>
+
+        <div class="evidence-stats">
+          <span class="evidence-stat"><strong>1,024</strong> comments collected</span>
+          <span class="evidence-stat"><strong>273</strong> high-intent</span>
+          <span class="evidence-stat"><strong>224</strong> YouTube</span>
+          <span class="evidence-stat"><strong>49</strong> Reddit</span>
+          <span class="evidence-stat"><strong>97</strong> unique sets</span>
+        </div>
+
+        <div class="evidence-charts">
+          <div class="evidence-chart">
+            <h3>What people ask for</h3>
+            <div class="chart-bars">
+              <div class="chart-row">
+                <span class="chart-label">"Track ID?"</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 100%"></div></div>
+                <span class="chart-value">91</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">"Song at [time]?"</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 57%"></div></div>
+                <span class="chart-value">52</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">"What song?"</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 54%"></div></div>
+                <span class="chart-value">49</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">"Tracklist?"</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 27%"></div></div>
+                <span class="chart-value">25</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">"Playlist?"</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 26%"></div></div>
+                <span class="chart-value">24</span>
+              </div>
+            </div>
+          </div>
+          <div class="evidence-chart">
+            <h3>Where they ask</h3>
+            <div class="chart-bars">
+              <div class="chart-row">
+                <span class="chart-label">YouTube</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 100%"></div></div>
+                <span class="chart-value">224</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-label">Reddit</span>
+                <div class="chart-bar-track"><div class="chart-bar-fill" style="width: 22%"></div></div>
+                <span class="chart-value">49</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>High-intent sample</h3>
+
+        <div class="evidence-filters">
+          <button class="evidence-filter active" data-filter="all">All</button>
+          <button class="evidence-filter" data-filter="youtube">YouTube</button>
+          <button class="evidence-filter" data-filter="reddit">Reddit</button>
+        </div>
+
+        <div class="evidence-table-wrap">
+          <table class="evidence-table" id="evidenceTable">
+            <thead>
+              <tr>
+                <th>Comment</th>
+                <th>Context</th>
+                <th>Platform</th>
+                <th>When</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="evidenceBody"></tbody>
+          </table>
+          <div class="evidence-actions">
+            <button class="evidence-show-more" id="evidenceShowMore" style="display:none"></button>
+            <button class="evidence-show-more" id="evidenceShowLess" style="display:none">Show less</button>
+          </div>
+        </div>
+
+        <div class="evidence-downloads">
+          <h3>Full datasets</h3>
+          <p>Download the complete evidence collection for review or analysis.</p>
+          <div class="evidence-download-links">
+            <a href="/data/tracklist/tracklist_customer_need_strict.csv" download class="evidence-download-link">&darr; High-intent dataset (273 comments, CSV)</a>
+            <a href="/data/tracklist/tracklist_customer_need_large.csv" download class="evidence-download-link">&darr; Full dataset (1,024 comments, CSV)</a>
+          </div>
+        </div>
+
+        <details class="evidence-methodology">
+          <summary><h3>Collection methodology</h3></summary>
+          <p>We validated customer demand by running an automated crawl &mdash; no manually supplied URLs &mdash; across YouTube DJ set comments and Reddit discussions, filtering for explicit intent signals like &ldquo;track ID,&rdquo; &ldquo;what song,&rdquo; &ldquo;tracklist,&rdquo; and timestamp-based requests. The broad evidence set contains 1,024 comments (800 YouTube, 224 Reddit). After applying a stricter high-intent filter, 273 remain (224 YouTube, 49 Reddit), spanning 97 unique YouTube sets and 27 Reddit sources. This indicates recurring, cross-community demand for faster identification of tracks inside long DJ sets.</p>
+          <ol class="methodology-steps">
+            <li>
+              <strong>Sources.</strong>
+              <span>YouTube comments via automated extraction (youtube-comment-downloader) and Reddit threads via PullPush API. Two platforms, two signal types.</span>
+            </li>
+            <li>
+              <strong>Discovery.</strong>
+              <span>Searched queries like &ldquo;boiler room dj set,&rdquo; &ldquo;hor berlin dj set,&rdquo; &ldquo;mixmag the lab,&rdquo; &ldquo;cercle track id,&rdquo; &ldquo;dj set what song&rdquo; across both platforms. Discovered 171 YouTube videos and 15 Reddit query categories.</span>
+            </li>
+            <li>
+              <strong>Demand filtering.</strong>
+              <span>Comments retained only if they match demand patterns: &ldquo;track id,&rdquo; &ldquo;what song,&rdquo; &ldquo;tracklist,&rdquo; timestamp queries (&ldquo;song at 34:20&rdquo;), or request cues (&ldquo;anyone know,&rdquo; &ldquo;where can I find&rdquo;).</span>
+            </li>
+            <li>
+              <strong>Intent tagging.</strong>
+              <span>Each comment tagged with one or more of five intent categories: track_id, timestamp_query, what_song, tracklist, playlist.</span>
+            </li>
+            <li>
+              <strong>Strict filtering.</strong>
+              <span>Started from 1,024 broad records. Applied a second-stage filter requiring explicit request language plus tracklist/ID semantics. Deduped by platform, source URL, and comment prefix. Result: 273 strict high-intent records &mdash; the primary proof set.</span>
+            </li>
+            <li>
+              <strong>What counts as high intent.</strong>
+              <span>An explicit ask for missing information &mdash; not generic discussion. Qualifying patterns: &ldquo;track id,&rdquo; &ldquo;what song,&rdquo; &ldquo;anyone know,&rdquo; &ldquo;looking for ID,&rdquo; &ldquo;tracklist?,&rdquo; &ldquo;playlist?,&rdquo; &ldquo;where can I find.&rdquo; Also timestamp-specific asks like &ldquo;track @ 27:40&rdquo; or &ldquo;song at 32:00.&rdquo;</span>
+            </li>
+            <li>
+              <strong>Reproducibility.</strong>
+              <span>Fully scripted collection (Python). Re-runnable with the same parameters. Deduped across platform, source URL, and normalized comment prefix.</span>
+            </li>
+          </ol>
+          <p>In practical terms, users are already trying to do this manually &mdash; asking in comments, searching forums, posting on Reddit. This maps directly to our URL-first extraction workflow and gives us credible early proof of problem demand.</p>
+        </details>
+      </details>
+
+      <details class="scope-section" open id="what-tracklist-does">
+        <summary><h2>What Tracklist Does</h2></summary>
+        <ol class="scope-steps">
+          <li>
+            <strong>Paste a YouTube link.</strong>
+            <span>Any DJ set, mix, or live recording with a tracklist in the description or comments.</span>
+          </li>
+          <li>
+            <strong>Tracklist extracts and parses.</strong>
+            <span>Timestamps, artist names, track titles — pulled from the description first, then from the highest-quality comment if needed.</span>
+          </li>
+          <li>
+            <strong>Spotify matching.</strong>
+            <span>Each track is searched on Spotify using a two-stage strategy: field-based search for precision, then broad search for recall. Fuzzy scoring handles remixes, edits, and spelling variations.</span>
+          </li>
+          <li>
+            <strong>Export to your Spotify.</strong>
+            <span>One click creates a playlist, adds the tracks, and saves them to your Liked Songs. Select all or pick individual tracks.</span>
+          </li>
+        </ol>
+      </details>
+
+      <details class="scope-section" id="key-features">
+        <summary><h2>Key Features</h2></summary>
+
+        <h3>Plan of record</h3>
+        <ol class="scope-steps">
+          <li>
+            <strong>YouTube tracklist extraction</strong>
+            <span>Parse timestamps and track info from video descriptions. Fall back to comments when the description has no tracklist — search top 100 comments by relevance, pick the best candidate.</span>
+          </li>
+          <li>
+            <strong>Spotify fuzzy matching</strong>
+            <span>Two-stage search: field-based query for precision, broad query for recall. Levenshtein distance scoring across title, artist, and album. Confidence levels (high/medium/low) surface match quality.</span>
+          </li>
+          <li>
+            <strong>One-click Spotify export</strong>
+            <span>Creates a new playlist, adds matched tracks, and saves them to Liked Songs — all in one action. PKCE OAuth keeps it stateless. Select all or pick individual tracks.</span>
+          </li>
+          <li>
+            <strong>My Sets local library</strong>
+            <span>Every extraction auto-saves to localStorage. Hash-based navigation for bookmarking. Search across all saved sets — tracks, artists, channels. No accounts required.</span>
+          </li>
+          <li>
+            <strong>Per-track export tracking</strong>
+            <span>Truthful badges from export history. Shows what was actually exported, not what was selected. Persists across sessions via export records.</span>
+          </li>
+          <li>
+            <strong>iPod Classic interface</strong>
+            <span>Pure CSS art — no images. Click wheel, screen proportions, retro typography. The tracklist renders on the iPod screen; the detail view is a panel beside it. Impractical and delightful.</span>
+          </li>
+        </ol>
+
+        <h3>Future considerations</h3>
+        <ul class="scope-features-future">
+          <li>SoundCloud / Mixcloud source support</li>
+          <li>Manual track editing before export</li>
+          <li>Share sets via URL (encode library state)</li>
+          <li>Spotify playlist sync (update existing playlists instead of creating new ones)</li>
+        </ul>
+      </details>
+
+      <details class="scope-section" id="key-flows">
+        <summary><h2>Key Flows</h2></summary>
+
+        <div class="scope-flow">
+          <h3>First-time extraction</h3>
+          <p>You land on the page and see a URL input. Paste a YouTube DJ set link. The page shows a loading state while the API extracts the tracklist and searches Spotify. Results appear on the iPod screen — scroll through tracks, see match confidence. Expand the detail panel to review each track with Spotify previews. Connect your Spotify account via OAuth. Select tracks and export — a playlist is created, tracks are added and saved to your Liked Songs. Each exported track gets a badge. The set auto-saves to your library.</p>
+        </div>
+
+        <div class="scope-flow">
+          <h3>Return visit</h3>
+          <p>You land on the page and your library loads automatically — all previously extracted sets, sorted by date. Browse thumbnails and titles, or search by track name, artist, or channel. Click into a set to see the full tracklist. Re-export tracks you missed, or review what you already exported. The library is local, instant, and yours.</p>
+        </div>
+      </details>
+
+      <details class="scope-section" id="design-decisions">
+        <summary><h2>Design Decisions</h2></summary>
+        <div class="scope-decisions">
+          <div class="scope-decision">
+            <h3>iPod as interface metaphor</h3>
+            <p>The extraction results render inside a CSS iPod Classic — a pure nostalgia play. The click wheel, the screen proportions, the font. It's impractical and delightful. The tracklist appears on the iPod screen; the detail view is a panel next to it.</p>
+          </div>
+          <div class="scope-decision">
+            <h3>Comments as fallback, not decoration</h3>
+            <p>Many popular DJ sets don't have tracklists in the description — but someone in the comments has typed one out. Tracklist searches the top 100 comments by relevance, parses each for timestamped or plain-text tracklists, and picks the best candidate. This single fallback doubles the success rate.</p>
+          </div>
+          <div class="scope-decision">
+            <h3>My Sets as local library</h3>
+            <p>Every extraction auto-saves to localStorage. No accounts, no database, no auth. Your library is yours, on your device. Hash-based navigation means you can bookmark a set and return to it. Search works across all saved sets — tracks, artists, channels.</p>
+          </div>
+          <div class="scope-decision">
+            <h3>Truthful export badges</h3>
+            <p>After exporting, each track shows whether it was actually exported — not whether it was selected. The badge reads from the export history, not the checkbox state. If you exported a set twice and a track failed the first time but succeeded the second, it shows as exported.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="scope-section" id="architecture">
+        <summary><h2>Architecture</h2></summary>
+        <div class="scope-architecture">
+          <div class="scope-layer">
+            <span class="scope-layer-label">Frontend</span>
+            <p>Single Astro page with inline TypeScript. No framework — vanilla DOM manipulation, event delegation, state machine for UI states. CSS iPod art is pure CSS (no images).</p>
+          </div>
+          <div class="scope-layer">
+            <span class="scope-layer-label">API</span>
+            <p>Three server routes: <code>/api/tracklist/extract</code> (YouTube → parse → Spotify search), <code>/api/tracklist/search</code> (individual Spotify lookup), <code>/api/tracklist/export</code> (playlist creation + Liked Songs). Rate-limited per IP.</p>
+          </div>
+          <div class="scope-layer">
+            <span class="scope-layer-label">Auth</span>
+            <p>Spotify PKCE OAuth — no server-side token storage. The authorization code flows through the export endpoint, which exchanges it for an access token, creates the playlist, and discards the token. Stateless.</p>
+          </div>
+          <div class="scope-layer">
+            <span class="scope-layer-label">Storage</span>
+            <p>localStorage only. Version-enveloped JSON store (<code>tracklist_library_v1</code>). No server persistence. Export history tracked per-set for truthful badges.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="scope-section" id="non-goals">
+        <summary><h2>Non-Goals</h2></summary>
+        <ul class="scope-nongoals">
+          <li>User accounts or server-side storage</li>
+          <li>Mobile-optimized iPod interface (the iPod is a desktop easter egg)</li>
+          <li>Support for non-YouTube sources (SoundCloud, Mixcloud)</li>
+          <li>Audio fingerprinting or Shazam-like recognition</li>
+          <li>Collaborative playlists or social features</li>
+        </ul>
+      </details>
+
+      <details class="scope-section scope-section-last" id="status">
+        <summary><h2>Status</h2></summary>
+        <p>Core extraction, matching, and export are working. The My Sets library is functional. Current focus: visual polish, edge case handling, and writing this scope document.</p>
+        <p><a href="/projects/tracklist">Try Tracklist</a></p>
+      </details>
+
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  const EVIDENCE_DATA = [
+    { platform: "youtube", context: "KOLLIN | Boiler Room: Tokyo", user: "@Antarezi", comment: "We need the track ID guy", url: "https://www.youtube.com/watch?v=GaoVTatNllI&lc=UgxSzR-MgMYfBaU-m7t4AaABAg", when: "1 month ago" },
+    { platform: "youtube", context: "KOLLIN | Boiler Room: Tokyo", user: "@RudiGallon", comment: "TRACK ID GUY WHERE R U", url: "https://www.youtube.com/watch?v=GaoVTatNllI&lc=UgwcHQqIzZmQNCu5ygV4AaABAg", when: "1 month ago" },
+    { platform: "youtube", context: "Confidence Man | Mixmag Lab London", user: "@Dr.Brainwash", comment: "We need the track ID please!!!!!", url: "https://www.youtube.com/watch?v=-5G9sk8lk0o&lc=UgwiXESQWNn8BqGLUp94AaABAg.A9iw5wjIZVzAB5m6f_wkqv", when: "1 year ago" },
+    { platform: "youtube", context: "Fred P Boiler Room Berlin DJ Set", user: "@SupernoOova", comment: "2:38:00 TRACK ID PLEAAAAAASE !!! WHAT A BOMB !!!!", url: "https://www.youtube.com/watch?v=kFwqe0UzERI&lc=UgwXqfIka21-tTVRTod4AaABAg", when: "4 years ago" },
+    { platform: "youtube", context: "Tinashe + Friends | Boiler Room: NYC", user: "@cozmo2727", comment: "Please someone tell me what song is playing from 18:44-19:15", url: "https://www.youtube.com/watch?v=ZIl27YEX3a0&lc=UgzZPAWMd9YHQwggOPZ4AaABAg", when: "4 months ago" },
+    { platform: "youtube", context: "DJ HEARTSTRING | H\u00D6R Berlin", user: "@Peterpahn888", comment: "please i need this TRACK ID at 7 min up to 9 min", url: "https://www.youtube.com/watch?v=Yj837Pegpfs&lc=Ugz7vRCSrxFGiQ14KU94AaABAg", when: "5 months ago" },
+    { platform: "youtube", context: "Mochakk | Mixmag Lab Mo\u00E7ambique", user: "@_lexsan", comment: "36:26 is sooo good we NEED this track ID", url: "https://www.youtube.com/watch?v=NB2zLEejDL0&lc=Ugy8rES1ceu87kuJ1QZ4AaABAg.AMspfrXXfFyAN9RB1oKiJe", when: "5 months ago" },
+    { platform: "youtube", context: "Mochakk | Mixmag Lab Mo\u00E7ambique", user: "@joshuamarbaniang5990", comment: "34:43 Can someone please help me with the track ID", url: "https://www.youtube.com/watch?v=NB2zLEejDL0&lc=UgxHkA7feHyHvskx7RJ4AaABAg", when: "4 months ago" },
+    { platform: "youtube", context: "Bonobo Boiler Room NYC DJ Set", user: "@arbow954", comment: "That song without the track ID (first one) is so beautiful I need to find the name of it it's too much", url: "https://www.youtube.com/watch?v=uynCeLheCPc&lc=UgxpFrVSYLG2SHHwVfR4AaABAg.8eZLN1lfKFr8exaepeLCVA", when: "7 years ago" },
+    { platform: "youtube", context: "Floating Points (5hr) | Boiler Room: NYC", user: "@gaborkiss8569", comment: "Plz. The first song!! I have never heard something like that!!!!! Song id plz!!??", url: "https://www.youtube.com/watch?v=kiy05zewUpg&lc=Ugz_b6-0jtWbvXCkTGV4AaABAg", when: "4 months ago" },
+    { platform: "youtube", context: "Oppidan | Boiler Room SYSTEM: Bristol", user: "@oohlala2011", comment: "Anybody got the track ID for the track that starts @5:20? That bop eatsss", url: "https://www.youtube.com/watch?v=zyWtfUrQKSw&lc=Ugw9zPqY3jXmYVEVezZ4AaABAg", when: "2 months ago" },
+    { platform: "youtube", context: "Skream ft. Flowdan | Boiler Room: Liverpool", user: "@Pardonsays", comment: "17:30 please someone tell me what song is this", url: "https://www.youtube.com/watch?v=FKy6tS-itZU&lc=UgwIZuIWJ90yXSUhI7p4AaABAg", when: "1 year ago" },
+    { platform: "youtube", context: "Skream ft. Flowdan | Boiler Room: Liverpool", user: "@Maxmax-sm9gi", comment: "29:48 track id anyone???", url: "https://www.youtube.com/watch?v=FKy6tS-itZU&lc=UgxmXHbotEld85Un5NR4AaABAg", when: "1 year ago" },
+    { platform: "youtube", context: "BONDAX deep house set in The Lab LDN", user: "@Merlijn83", comment: "Anyone have a tracklist? There are tons of bangers here", url: "https://www.youtube.com/watch?v=thdEvA0KHiM&lc=UgyEq2RoztdNGLovJOF4AaABAg", when: "3 years ago" },
+    { platform: "youtube", context: "BONDAX deep house set in The Lab LDN", user: "@DrewLaww", comment: "16:25 can someone please tell me what song this is and what they mixed it with?", url: "https://www.youtube.com/watch?v=thdEvA0KHiM&lc=UgxXbpjiTgsCNrkoWYZ4AaABAg", when: "7 days ago" },
+    { platform: "youtube", context: "KAYTRANADA - DJ set at Mixmag Live", user: "@tetlowlad", comment: "43:45 what song people? Please!", url: "https://www.youtube.com/watch?v=JjuyV5TEKiI&lc=UgzB09zIj4Grq2g9ayN4AaABAg", when: "6 years ago" },
+    { platform: "youtube", context: "Tony Touch Boiler Room NYC DJ Set", user: "@Boxinglifestyle_Esp", comment: "Tracklist???", url: "https://www.youtube.com/watch?v=WX6sVyhnfKg&lc=UgwwPAZWaxOEJjuAtdx4AaABAg", when: "8 years ago" },
+    { platform: "youtube", context: "Lamp\u00E9 / Minimal Techno DJ Set", user: "@Nicoelskater", comment: "TRACKLIST???", url: "https://www.youtube.com/watch?v=LW0OVY9e5r0&lc=Ugz89OAFkZ3HEO3sPhJ4AaABAg", when: "7 months ago" },
+    { platform: "youtube", context: "RICHIE HAWTIN Mixmag Live @ Output NYC", user: "@candelafalzetti8333", comment: "por qu\u00E9 no est\u00E1 la playlist? quiero llorar", url: "https://www.youtube.com/watch?v=C5PSxe6iCnI&lc=UgyzmcNKvpzOnnbddIt4AaABAg", when: "2 years ago" },
+    { platform: "youtube", context: "Lens feat. Linguistics MC | Boiler Room", user: "@sam7670", comment: "Tracklist??", url: "https://www.youtube.com/watch?v=U8Gj270JC94&lc=Ugwm4EUL6cZcvaHteHF4AaABAg", when: "3 weeks ago" },
+    { platform: "youtube", context: "Justin Strauss | Boiler Room x HBO: NYC", user: "@mymfleg2506", comment: "WHAT IS THE TRACK ID AT 43:42", url: "https://www.youtube.com/watch?v=AGIBsnzXMAg&lc=Ugyhot8HQpujCv6yB5d4AaABAg", when: "4 days ago" },
+    { platform: "youtube", context: "Sara Delirio | H\u00D6R Berlin", user: "@NikolaLevak", comment: "38:00 Haven't heard something like this in a while. Nasty driving groove... Can you give me the track name please?", url: "https://www.youtube.com/watch?v=9iXiFk85jUc&lc=UgwhVnw3jJBH9BYK_zN4AaABAg.APnYByjAvoGAQ9MEyGPJNJ", when: "2 months ago" },
+    { platform: "youtube", context: "Take a Daytrip | Boiler Room x Gap: NYC", user: "@krystalgreenkg", comment: "23:18 what song is that?? I need it", url: "https://www.youtube.com/watch?v=v639h4JfPec&lc=Ugzi4CRY-e6pESWRRjZ4AaABAg", when: "7 months ago" },
+    { platform: "youtube", context: "\u00A5\u00D8U$UK\u20AC \u00A5UK1MAT$U | H\u00D6R Berlin", user: "@JewelHill1111", comment: "Anybody know the song at 27:46? Matter fact does anyone know where I can get the setlist? lol", url: "https://www.youtube.com/watch?v=WvyvwlowHWM&lc=Ugykf-u7ovgStmEcsnp4AaABAg", when: "3 months ago" },
+    { platform: "youtube", context: "Boris Brejcha Hi-Tech Minimal Journey", user: "@m3g4l0m4n3", comment: "How can I comment which track if no tracklist ?", url: "https://www.youtube.com/watch?v=KCoCTIDC8XU&lc=UgyLCCA43CHxiDd6b4B4AaABAg", when: "4 months ago" },
+    { platform: "reddit", context: "r/Techno", user: "loekes", comment: "Do you know the track ID of this song? He plays it in his Cercle set on Hudson River too", url: "https://www.reddit.com/r/Techno/comments/8xw8s7/how_did_you_all_get_introduced_to_techno/e77k4pf/", when: "" },
+    { platform: "reddit", context: "r/Beatmatch", user: "RemoteCourage7", comment: "Track at 14:10 is EPIC. Don't have time to match up with the playlist. What's the ID?", url: "https://www.reddit.com/r/Beatmatch/comments/g4nd93/weekly_mix_feedback_thread_april_20_2020/fo6kh2g/", when: "" },
+    { platform: "reddit", context: "r/Beatmatch", user: "Hazbenn", comment: "I watch a lot of Boiler Room videos, and get a lot of track IDs from there.", url: "https://www.reddit.com/r/Beatmatch/comments/glvuil/weekly_mix_feedback_thread_may_18_2020/frbkm25/", when: "" },
+    { platform: "reddit", context: "r/Beatmatch", user: "maroooni", comment: "someone will ask you for some track ID / look at the CDJs to see the track ID \u2014 save yourself the embarrassing moments", url: "https://www.reddit.com/r/Beatmatch/comments/z3cmlg/in_reality_do_djs_play_premade_sets/ixlkv6d/", when: "" },
+    { platform: "reddit", context: "r/DJs", user: "noonlastnight", comment: "my recent approach has been to post a mix, and then in the caption, say \"tracklist at www.example.com\" \u2014 a lot of blogs like Mixmag/RA do this", url: "https://www.reddit.com/r/DJs/comments/crpx98/does_anyone_know_the_soundcloud_policy_for_dj/ex8g99f/", when: "" },
+  ];
+
+  const PAGE_SIZE = 5;
+  let visibleCount = PAGE_SIZE;
+  let currentFilter = 'all';
+
+  function escapeHtml(str: string): string {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function getFiltered() {
+    return currentFilter === 'all'
+      ? EVIDENCE_DATA
+      : EVIDENCE_DATA.filter(d => d.platform === currentFilter);
+  }
+
+  function renderEvidence() {
+    const tbody = document.getElementById('evidenceBody');
+    const showMoreBtn = document.getElementById('evidenceShowMore') as HTMLButtonElement | null;
+    const showLessBtn = document.getElementById('evidenceShowLess') as HTMLButtonElement | null;
+    if (!tbody) return;
+
+    const filtered = getFiltered();
+    const visible = filtered.slice(0, visibleCount);
+
+    tbody.innerHTML = visible.map(d => {
+      const platformClass = d.platform === 'youtube' ? 'evidence-platform-yt' : 'evidence-platform-reddit';
+      const platformLabel = d.platform === 'youtube' ? 'YouTube' : 'Reddit';
+      const context = d.context || (d.url.includes('reddit.com') ? d.url.split('/r/')[1]?.split('/')[0] || '' : '');
+      return `<tr>
+        <td class="evidence-comment">${escapeHtml(d.comment)}</td>
+        <td class="evidence-context">${escapeHtml(context)}</td>
+        <td><span class="evidence-platform ${platformClass}">${platformLabel}</span></td>
+        <td class="evidence-when">${escapeHtml(d.when || '\u2014')}</td>
+        <td><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="evidence-source-link">\u2197</a></td>
+      </tr>`;
+    }).join('');
+
+    if (showMoreBtn) {
+      const remaining = filtered.length - visibleCount;
+      if (remaining > 0) {
+        showMoreBtn.textContent = `Show more (${remaining} remaining)`;
+        showMoreBtn.style.display = '';
+      } else {
+        showMoreBtn.style.display = 'none';
+      }
+    }
+
+    if (showLessBtn) {
+      showLessBtn.style.display = visibleCount > PAGE_SIZE ? '' : 'none';
+    }
+  }
+
+  function initEvidence() {
+    visibleCount = PAGE_SIZE;
+    currentFilter = 'all';
+    renderEvidence();
+
+    document.querySelectorAll('.evidence-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.evidence-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = (btn as HTMLElement).dataset.filter || 'all';
+        visibleCount = PAGE_SIZE;
+        renderEvidence();
+      });
+    });
+
+    document.getElementById('evidenceShowMore')?.addEventListener('click', () => {
+      visibleCount += PAGE_SIZE;
+      renderEvidence();
+    });
+
+    document.getElementById('evidenceShowLess')?.addEventListener('click', () => {
+      visibleCount = PAGE_SIZE;
+      renderEvidence();
+    });
+  }
+
+  // --- Hash navigation: open target <details> ---
+
+  function openTargetSection() {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const target = document.querySelector(hash);
+    if (target instanceof HTMLDetailsElement && !target.open) {
+      target.open = true;
+    }
+  }
+
+  // Wire TOC link clicks to open collapsed sections
+  function initToc() {
+    document.querySelectorAll('.scope-toc a').forEach(link => {
+      link.addEventListener('click', () => {
+        const id = link.getAttribute('href')?.slice(1);
+        if (!id) return;
+        const target = document.getElementById(id);
+        if (target instanceof HTMLDetailsElement) target.open = true;
+      });
+    });
+  }
+
+  // --- Scrollspy: highlight current section in TOC ---
+
+  function initScrollspy() {
+    const tocLinks = document.querySelectorAll('.scope-toc a');
+    const sections = document.querySelectorAll('details.scope-section');
+    if (!tocLinks.length || !sections.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(l => l.classList.remove('active'));
+          const id = entry.target.id;
+          const active = document.querySelector(`.scope-toc a[href="#${id}"]`);
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-10% 0px -80% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+  }
+
+  // --- Init all ---
+
+  function initAll() {
+    initEvidence();
+    initToc();
+    initScrollspy();
+    openTargetSection();
+  }
+
+  initAll();
+  window.addEventListener('hashchange', openTargetSection);
+  document.addEventListener('astro:page-load', initAll);
+</script>
+
+<style>
+  .scope-breadcrumb {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .scope-breadcrumb a {
+    color: var(--color-text-muted);
+  }
+
+  .scope-breadcrumb a:hover {
+    color: var(--color-accent);
+  }
+
+  /* Hero */
+
+  .scope-hero {
+    margin-bottom: var(--space-3xl);
+    padding-bottom: var(--space-2xl);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .scope-hero h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .scope-tagline {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    line-height: var(--leading-snug);
+    margin-bottom: var(--space-lg);
+  }
+
+  .scope-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .scope-badge {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    background-color: var(--color-surface);
+    padding: 2px var(--space-sm);
+    border-radius: 3px;
+  }
+
+  .scope-date {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .scope-page {
+    overflow-x: clip;
+  }
+
+  /* TOC — sticky right margin on desktop, inline on mobile */
+
+  .scope-content {
+    position: relative;
+  }
+
+  .scope-toc {
+    position: sticky;
+    top: var(--space-2xl);
+    float: right;
+    width: 180px;
+    margin-right: -220px;
+    padding-left: var(--space-md);
+    border-left: 2px solid var(--color-border);
+  }
+
+  .scope-toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .scope-toc li {
+    margin-bottom: var(--space-xs);
+  }
+
+  .scope-toc a {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    line-height: var(--leading-snug);
+    display: block;
+    padding: 2px 0;
+    transition: color var(--transition-base);
+    background-image: none;
+  }
+
+  .scope-toc a:hover {
+    color: var(--color-text);
+    background-size: 0% 0;
+  }
+
+  .scope-toc a.active {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  /* Details / Summary — collapsible sections */
+
+  .scope-section summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .scope-section summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .scope-section summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: color var(--transition-base);
+  }
+
+  .scope-section[open] summary::after {
+    content: '\2212';
+  }
+
+  .scope-section summary:hover::after {
+    color: var(--color-accent);
+  }
+
+  .scope-section summary h2 {
+    margin-bottom: 0;
+  }
+
+  .scope-section[open] summary {
+    margin-bottom: var(--space-lg);
+  }
+
+  details.scope-section {
+    scroll-margin-top: var(--space-xl);
+  }
+
+  /* Sections */
+
+  .scope-section {
+    margin-bottom: var(--space-3xl);
+  }
+
+  .scope-section-last {
+    margin-bottom: 0;
+  }
+
+  .scope-content h2 {
+    font-size: var(--text-lg);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: var(--space-lg);
+    font-weight: 400;
+  }
+
+  .scope-content h3 {
+    font-size: var(--text-base);
+    margin-bottom: var(--space-xs);
+  }
+
+  .scope-content p {
+    line-height: var(--leading-body);
+    color: var(--color-text);
+  }
+
+  .scope-content p + p {
+    margin-top: var(--space-md);
+  }
+
+  .scope-content code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background-color: var(--color-surface);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* Quote */
+
+  .scope-quote {
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--space-lg);
+    margin: 0 0 var(--space-xl) 0;
+    font-style: italic;
+    color: var(--color-text);
+    line-height: var(--leading-body);
+  }
+
+  .scope-insight-list {
+    padding-left: var(--space-lg);
+    color: var(--color-text-muted);
+    line-height: var(--leading-body);
+  }
+
+  .scope-insight-list li {
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Steps */
+
+  .scope-steps {
+    padding-left: 0;
+    counter-reset: steps;
+    list-style: none;
+  }
+
+  .scope-steps li {
+    counter-increment: steps;
+    margin-bottom: var(--space-lg);
+    padding-left: var(--space-2xl);
+    position: relative;
+    line-height: var(--leading-body);
+  }
+
+  .scope-steps li::before {
+    content: counter(steps);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    font-weight: 600;
+    width: var(--space-xl);
+    text-align: center;
+  }
+
+  .scope-steps li strong {
+    display: block;
+    margin-bottom: var(--space-xs);
+  }
+
+  .scope-steps li span {
+    color: var(--color-text-muted);
+  }
+
+  /* Decisions */
+
+  .scope-decisions {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  .scope-decision {
+    border-left: 2px solid var(--color-border);
+    padding-left: var(--space-lg);
+  }
+
+  .scope-decision p {
+    color: var(--color-text-muted);
+  }
+
+  /* Architecture */
+
+  .scope-architecture {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  .scope-layer {
+    display: grid;
+    grid-template-columns: 5rem 1fr;
+    gap: var(--space-md);
+    align-items: baseline;
+  }
+
+  .scope-layer-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .scope-layer p {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: var(--leading-body);
+  }
+
+  /* Users */
+
+  .scope-users {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  .scope-user {
+    border-left: 2px solid var(--color-border);
+    padding-left: var(--space-lg);
+  }
+
+  .scope-user p {
+    color: var(--color-text-muted);
+  }
+
+  /* Evidence */
+
+  .evidence-stats {
+    display: flex;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+    margin: var(--space-lg) 0;
+  }
+
+  .evidence-stat {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .evidence-stat strong {
+    color: var(--color-accent);
+    font-size: var(--text-base);
+  }
+
+  .evidence-filters {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .evidence-filter {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    padding: 4px var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+
+  .evidence-filter:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .evidence-filter.active {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .evidence-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .evidence-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    table-layout: fixed;
+  }
+
+  .evidence-table thead th {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-align: left;
+    padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+    border-bottom: 2px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  .evidence-table thead th:nth-child(1) { width: 50%; }
+  .evidence-table thead th:nth-child(2) { width: 22%; }
+  .evidence-table thead th:nth-child(3) { width: 10%; }
+  .evidence-table thead th:nth-child(4) { width: 13%; }
+  .evidence-table thead th:nth-child(5) { width: 5%; }
+
+  .evidence-table tbody td {
+    padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-surface);
+    vertical-align: top;
+    line-height: var(--leading-snug);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .evidence-comment {
+    color: var(--color-text);
+  }
+
+  .evidence-context {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .evidence-platform {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .evidence-platform-yt {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+
+  .evidence-platform-reddit {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+
+  .evidence-when {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .evidence-source-link {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .evidence-source-link:hover {
+    color: var(--color-accent);
+  }
+
+  .evidence-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+  }
+
+  .evidence-show-more {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    flex: 1;
+    text-align: center;
+  }
+
+  .evidence-show-more:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* Charts */
+
+  .evidence-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2xl);
+    margin: var(--space-xl) 0;
+  }
+
+  .evidence-chart h3 {
+    margin-bottom: var(--space-md);
+  }
+
+  .chart-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .chart-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .chart-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    width: 130px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .chart-bar-track {
+    flex: 1;
+    height: 8px;
+    background-color: var(--color-surface);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .chart-bar-fill {
+    height: 100%;
+    background-color: var(--color-accent);
+    border-radius: 4px;
+  }
+
+  .chart-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    width: 32px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
+  /* Downloads */
+
+  .evidence-downloads {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .evidence-downloads p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .evidence-download-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .evidence-download-link {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .evidence-download-link:hover {
+    color: var(--color-accent);
+  }
+
+  /* Methodology (nested details) */
+
+  .evidence-methodology {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .evidence-methodology summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .evidence-methodology summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .evidence-methodology summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .evidence-methodology[open] summary::after {
+    content: '\2212';
+  }
+
+  .evidence-methodology summary h3 {
+    margin-bottom: 0;
+  }
+
+  .evidence-methodology[open] summary {
+    margin-bottom: var(--space-lg);
+  }
+
+  .methodology-steps {
+    padding-left: 0;
+    counter-reset: msteps;
+    list-style: none;
+  }
+
+  .methodology-steps li {
+    counter-increment: msteps;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-xl);
+    position: relative;
+    line-height: var(--leading-body);
+  }
+
+  .methodology-steps li::before {
+    content: counter(msteps);
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .methodology-steps li strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .methodology-steps li span {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  /* Features future */
+
+  .scope-features-future {
+    padding-left: var(--space-lg);
+    color: var(--color-text-muted);
+    line-height: var(--leading-body);
+  }
+
+  .scope-features-future li {
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Flows */
+
+  .scope-flow {
+    margin-bottom: var(--space-xl);
+  }
+
+  .scope-flow:last-child {
+    margin-bottom: 0;
+  }
+
+  .scope-flow p {
+    color: var(--color-text-muted);
+  }
+
+  /* Non-goals */
+
+  .scope-nongoals {
+    padding-left: var(--space-lg);
+    color: var(--color-text-muted);
+    line-height: var(--leading-body);
+  }
+
+  .scope-nongoals li {
+    margin-bottom: var(--space-sm);
+  }
+
+  /* TOC responsive */
+
+  @media (max-width: 1099px) {
+    .scope-toc {
+      position: static;
+      float: none;
+      width: auto;
+      margin-right: 0;
+      margin-bottom: var(--space-2xl);
+      padding-left: var(--space-md);
+    }
+  }
+
+  /* Mobile */
+
+  @media (max-width: 639px) {
+    .scope-layer {
+      grid-template-columns: 1fr;
+      gap: var(--space-xs);
+    }
+
+    .scope-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-sm);
+    }
+
+    .evidence-stats {
+      gap: var(--space-md);
+    }
+
+    .evidence-charts {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+
+    .chart-label {
+      width: 100px;
+      font-size: 0.65rem;
+    }
+
+    .evidence-table {
+      font-size: var(--text-xs);
+    }
+  }
+</style>

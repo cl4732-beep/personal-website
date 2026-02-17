@@ -1,0 +1,2821 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+---
+
+<PageLayout title="Tracklist — Clemente Lacerda" description="Extract tracklists from DJ sets on YouTube and export matched songs to Spotify.">
+  <section class="tracklist-page">
+
+    <div id="libraryLayout" class="library-layout">
+      <!-- My Sets Library (left column in library view) -->
+      <div id="librarySection" class="library-section hidden">
+        <div class="library-header">
+          <h2 class="library-title">My Sets</h2>
+          <div class="library-controls">
+            <input type="text" id="librarySearch" placeholder="Search tracks, artists, channels..."
+                   class="library-search" autocomplete="off" />
+          </div>
+        </div>
+        <div id="libraryList" class="library-list"></div>
+        <div id="libraryEmpty" class="library-empty hidden">
+          <p>No saved sets yet.</p>
+          <p class="library-empty-hint">Extract a DJ set and it will appear here automatically.</p>
+        </div>
+      </div>
+
+      <!-- Atmosphere: Quotes + Input (right column in library view) -->
+      <div id="atmosphere" class="atmosphere">
+        <div class="quotes">
+          <blockquote class="atmosphere-quote">
+            <p>"Music is the shorthand of emotion."</p>
+            <cite>Leo Tolstoy</cite>
+          </blockquote>
+          <blockquote class="atmosphere-quote">
+            <p>"Without music, life would be a mistake."</p>
+            <cite>Friedrich Nietzsche</cite>
+          </blockquote>
+        </div>
+
+        <p id="extractLabel" class="extract-label">Extract a set</p>
+
+        <form id="extractForm" class="url-input-form">
+          <label for="youtube-url" class="visually-hidden">YouTube URL</label>
+          <div class="input-wrapper">
+            <input
+              type="url"
+              id="youtube-url"
+              name="url"
+              placeholder="Paste a YouTube DJ set link"
+              required
+              autocomplete="off"
+            />
+            <div class="input-underline"></div>
+          </div>
+          <button type="submit" class="visually-hidden" tabindex="-1">Extract</button>
+        </form>
+        <p class="input-hint">Works best with Cercle, Boiler Room, Anjunadeep, and sets that list timestamps.</p>
+        <p id="tracklistNotice" class="input-notice hidden" role="status" aria-live="polite"></p>
+        <p id="libraryLink" class="library-link hidden">
+          <button id="openLibraryBtn" class="library-link-btn">
+            My Sets (<span id="libraryCountBadge">0</span>)
+          </button>
+        </p>
+      </div>
+    </div>
+
+    <!-- iPod Stage -->
+    <div id="ipodStage" class="ipod-stage hidden">
+      <canvas id="confettiCanvas" class="confetti-canvas" width="0" height="0"></canvas>
+
+      <!-- Results header: full width above side-by-side -->
+      <div id="resultsHeader" class="results-header hidden">
+        <div class="results-meta">
+          <h2 id="setTitle" class="set-title"></h2>
+          <span id="librarySavedLabel" class="library-saved-label hidden">Saved to My Sets</span>
+          <p class="set-info">
+            <span id="channelName" class="channel-name"></span>
+            <span id="tracklistSource" class="tracklist-source hidden"></span>
+            <span class="track-count-badge"><span id="trackCount"></span> tracks</span>
+            <span id="selectionSummary" class="selection-summary">Selected 0 • Ready 0 • Unresolved 0</span>
+            <label class="select-all-label"><input type="checkbox" id="selectAll" class="track-select" /> Select all</label>
+          </p>
+        </div>
+        <div class="results-actions">
+          <button id="exportSpotifyBtn" class="primary-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            Export to Spotify
+          </button>
+          <span id="exportSelectionPill" class="export-selection-pill">0 selected</span>
+          <span id="exportStatusInline" class="export-status-inline hidden">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span id="exportStatusMessage"></span>
+            <a id="exportPlaylistLink" href="#" target="_blank" rel="noopener">Open in Spotify</a>
+          </span>
+          <button id="newSearchBtn" class="secondary-btn">Extract another</button>
+          <button id="resultsLibraryBtn" class="secondary-btn library-results-btn hidden">My Sets (<span id="resultsLibraryCount">0</span>)</button>
+        </div>
+      </div>
+
+      <!-- Side-by-side: iPod + tracklist -->
+      <div class="ipod-and-list">
+        <div class="ipod-column">
+          <!-- iPod Classic -->
+          <div class="ipod-classic" id="ipodClassic" aria-label="iPod Classic displaying tracklist">
+            <div class="ipod-chrome-edge"></div>
+            <div class="ipod-body">
+              <!-- Screen housing -->
+              <div class="ipod-screen-housing">
+                <span class="ipod-label">iPod</span>
+                <div class="ipod-screen">
+                  <div class="ipod-screen-overlay is-off" id="ipodOverlay">
+                    <div class="ipod-power-line" id="ipodPowerLine"></div>
+                  </div>
+                  <div class="ipod-lcd-glow"></div>
+                  <div class="ipod-screen-content" id="ipodScreenContent">
+                    <!-- Loading -->
+                    <div class="ipod-loading" id="ipodLoading">
+                      <div class="ipod-spinner"></div>
+                      <span class="ipod-loading-text" id="ipodLoadingText">Scanning...</span>
+                    </div>
+                    <!-- Playlist -->
+                    <div class="ipod-playlist" id="ipodPlaylist" style="display:none">
+                      <div class="ipod-header-bar">
+                        <span class="ipod-header-title" id="ipodSetTitle">Tracklist</span>
+                      </div>
+                      <div class="ipod-song-list-wrapper">
+                        <ul class="ipod-song-list" id="ipodSongList"></ul>
+                        <div class="ipod-scrollbar">
+                          <div class="ipod-scrollbar-thumb" id="ipodScrollThumb"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Error on screen -->
+                    <div class="ipod-error" id="ipodError" style="display:none">
+                      <span class="ipod-error-icon">!</span>
+                      <span class="ipod-error-text" id="ipodErrorText"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Controls -->
+              <div class="ipod-control-area">
+                <div class="ipod-button-row">
+                  <button class="ipod-btn" aria-label="Previous" tabindex="-1">◁◁</button>
+                  <button class="ipod-btn" aria-label="Menu" tabindex="-1">MENU</button>
+                  <button class="ipod-btn" aria-label="Play/Pause" tabindex="-1">▷ ||</button>
+                  <button class="ipod-btn" aria-label="Next" tabindex="-1">▷▷</button>
+                </div>
+                <div class="ipod-wheel">
+                  <button class="ipod-select" id="ipodSelect" aria-label="Select" tabindex="-1"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spotify player -->
+          <div id="spotifyPlayerCard" class="spotify-player-card hidden" aria-live="polite">
+            <p id="spotifyPlayerStatus" class="spotify-player-status">Playback Ready</p>
+            <p id="spotifyPlayerTrack" class="spotify-player-track">Select a matched track to play in Spotify.</p>
+          </div>
+          <!-- Hidden Spotify embed — must not be display:none or iframe won't load -->
+          <div id="spotifyEmbedHost" class="spotify-embed-host spotify-embed-offscreen"></div>
+        </div>
+
+        <!-- Detail Tracklist -->
+        <div id="detailSection" class="detail-section hidden">
+          <ol id="tracklist" class="tracklist"></ol>
+        </div>
+
+        <!-- Error state (beside iPod on desktop, below on mobile) -->
+        <div id="errorActions" class="error-actions hidden">
+          <p class="error-title" id="errorVideoTitle"></p>
+          <p class="error-message" id="errorMessage"></p>
+          <button id="retryBtn" class="secondary-btn">Try another URL</button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+</PageLayout>
+
+<script define:vars={{ PUBLIC_SPOTIFY_CLIENT_ID: import.meta.env.PUBLIC_SPOTIFY_CLIENT_ID || '' }}>
+  window.__SPOTIFY_CLIENT_ID = PUBLIC_SPOTIFY_CLIENT_ID;
+</script>
+
+<script>
+  import {
+    generateRandomString,
+    sha256Base64url,
+    setOAuthStateCookie,
+    clearOAuthStateCookie,
+  } from '../../../scripts/tracklist/oauth';
+  import {
+    saveSet,
+    updateSetExport,
+    loadLibrary,
+    loadSet,
+    deleteSet,
+    getLibraryCount,
+    searchLibrary,
+    toTracklistData,
+    getExportedUrisForSet,
+  } from '../../../scripts/tracklist/library';
+
+  function initTracklist() {
+    // --- DOM refs ---
+    const atmosphere = document.getElementById('atmosphere');
+    const ipodStage = document.getElementById('ipodStage');
+    const resultsHeader = document.getElementById('resultsHeader');
+    const detailSection = document.getElementById('detailSection');
+    const errorActions = document.getElementById('errorActions');
+    const tracklistNotice = document.getElementById('tracklistNotice');
+
+    const ipodClassic = document.getElementById('ipodClassic');
+    const ipodOverlay = document.getElementById('ipodOverlay');
+    const ipodPowerLine = document.getElementById('ipodPowerLine');
+    const ipodLoading = document.getElementById('ipodLoading');
+    const ipodLoadingText = document.getElementById('ipodLoadingText');
+    const ipodPlaylist = document.getElementById('ipodPlaylist');
+    const ipodSongList = document.getElementById('ipodSongList');
+    const ipodSetTitle = document.getElementById('ipodSetTitle');
+    const ipodScrollThumb = document.getElementById('ipodScrollThumb');
+    const ipodError = document.getElementById('ipodError');
+    const ipodErrorText = document.getElementById('ipodErrorText');
+    const spotifyPlayerCard = document.getElementById('spotifyPlayerCard');
+    const spotifyPlayerStatus = document.getElementById('spotifyPlayerStatus');
+    const spotifyPlayerTrack = document.getElementById('spotifyPlayerTrack');
+    const spotifyEmbedHost = document.getElementById('spotifyEmbedHost');
+
+    const form = document.getElementById('extractForm') as HTMLFormElement;
+    const urlInput = document.getElementById('youtube-url') as HTMLInputElement;
+    const errorMessage = document.getElementById('errorMessage');
+    const errorVideoTitle = document.getElementById('errorVideoTitle');
+    const setTitle = document.getElementById('setTitle');
+    const channelName = document.getElementById('channelName');
+    const trackCount = document.getElementById('trackCount');
+    const tracklist = document.getElementById('tracklist');
+    const retryBtn = document.getElementById('retryBtn');
+    const newSearchBtn = document.getElementById('newSearchBtn');
+    const exportSpotifyBtn = document.getElementById('exportSpotifyBtn');
+    const selectAllEl = document.getElementById('selectAll') as HTMLInputElement | null;
+    const selectionSummary = document.getElementById('selectionSummary');
+    const exportSelectionPill = document.getElementById('exportSelectionPill');
+    const exportStatusInline = document.getElementById('exportStatusInline');
+    const exportStatusMessage = document.getElementById('exportStatusMessage');
+    const exportPlaylistLink = document.getElementById('exportPlaylistLink') as HTMLAnchorElement | null;
+
+    const librarySection = document.getElementById('librarySection');
+    const libraryList = document.getElementById('libraryList');
+    const libraryEmpty = document.getElementById('libraryEmpty');
+    const librarySearch = document.getElementById('librarySearch') as HTMLInputElement | null;
+    const libraryLink = document.getElementById('libraryLink');
+    const libraryCountBadge = document.getElementById('libraryCountBadge');
+    const openLibraryBtn = document.getElementById('openLibraryBtn');
+    const resultsLibraryBtn = document.getElementById('resultsLibraryBtn');
+    const resultsLibraryCount = document.getElementById('resultsLibraryCount');
+    const libraryLayout = document.getElementById('libraryLayout');
+    const extractLabel = document.getElementById('extractLabel');
+    const librarySavedLabel = document.getElementById('librarySavedLabel');
+
+    if (!form || !urlInput || !tracklist || !selectAllEl) return;
+    if (form.dataset.tracklistBound === 'true') return;
+    form.dataset.tracklistBound = 'true';
+
+    let currentData: any = null;
+    let selectedIPodIndex = 0;
+    let playingIndex: number | null = null;
+    let selectedForExport = new Set<number>();
+    let exportedTracks = new Set<number>();
+    let wheelDeltaAccumulator = 0;
+    let lastWheelMoveAt = 0;
+    const WHEEL_THRESHOLD = 50;
+    const WHEEL_COOLDOWN_MS = 100;
+    const DEFAULT_SPOTIFY_URI = 'spotify:track:11dFghVXANMlKmJXsNCbNl';
+    let spotifyApiRequested = false;
+    let spotifyEmbedController: any = null;
+    let pendingSpotifyUri = '';
+    let isSpotifyPlaying = false;
+    let currentLoadedUri = '';
+
+    function setNotice(message: string, tone: 'info' | 'error' | 'success' = 'info') {
+      if (!tracklistNotice) return;
+
+      if (!message) {
+        tracklistNotice.className = 'input-notice hidden';
+        tracklistNotice.textContent = '';
+        return;
+      }
+
+      tracklistNotice.className = `input-notice ${tone}`;
+      tracklistNotice.textContent = message;
+    }
+
+    function hasSpotifyUri(track: any): boolean {
+      return Boolean(track?.spotify?.spotifyUri);
+    }
+
+    function getTrack(index: number): any | null {
+      if (!currentData?.tracks?.length) return null;
+      return currentData.tracks[index] ?? null;
+    }
+
+    function sanitizeSelectedSet() {
+      if (!currentData?.tracks?.length) {
+        selectedForExport.clear();
+        return;
+      }
+      const maxIndex = currentData.tracks.length - 1;
+      selectedForExport = new Set(
+        [...selectedForExport].filter((idx) => idx >= 0 && idx <= maxIndex)
+      );
+    }
+
+
+    function getSelectionMetrics() {
+      sanitizeSelectedSet();
+      const selectedCount = selectedForExport.size;
+      const readyCount = [...selectedForExport].reduce((count, idx) => {
+        const track = currentData?.tracks?.[idx];
+        return count + (hasSpotifyUri(track) ? 1 : 0);
+      }, 0);
+      const unresolvedCount = Math.max(0, selectedCount - readyCount);
+      return { selectedCount, readyCount, unresolvedCount };
+    }
+
+    function updatePlayerStatus(status: string, description: string) {
+      if (spotifyPlayerStatus) spotifyPlayerStatus.textContent = status;
+      if (spotifyPlayerTrack) spotifyPlayerTrack.textContent = description;
+    }
+
+
+    function updateExportCount() {
+      const { selectedCount, readyCount, unresolvedCount } = getSelectionMetrics();
+
+      if (selectionSummary) {
+        selectionSummary.textContent = `Selected ${selectedCount} • Ready ${readyCount} • Unresolved ${unresolvedCount}`;
+      }
+
+      if (exportSelectionPill) {
+        exportSelectionPill.textContent = `${selectedCount} selected`;
+      }
+
+      if (exportSpotifyBtn) {
+        const btn = exportSpotifyBtn as HTMLButtonElement;
+        btn.disabled = readyCount === 0;
+      }
+
+      if (currentData?.tracks?.length) {
+        const total = currentData.tracks.length;
+        selectAllEl.checked = selectedCount === total && total > 0;
+        selectAllEl.indeterminate = selectedCount > 0 && selectedCount < total;
+      } else {
+        selectAllEl.checked = false;
+        selectAllEl.indeterminate = false;
+      }
+    }
+
+    // --- State management ---
+    function showState(state: string) {
+      // Always hide library section unless we're in library state
+      librarySection?.classList.toggle('hidden', state !== 'library');
+
+      // Two-column layout only in library state
+      libraryLayout?.classList.toggle('is-library-view', state === 'library');
+      extractLabel?.classList.toggle('hidden', state !== 'library' && state !== 'input');
+
+      if (state === 'library') {
+        atmosphere?.classList.remove('collapsed');
+        ipodStage?.classList.add('hidden');
+        resultsHeader?.classList.add('hidden');
+        detailSection?.classList.add('hidden');
+        errorActions?.classList.add('hidden');
+        librarySavedLabel?.classList.add('hidden');
+        libraryLink?.classList.add('hidden');
+        urlInput.value = '';
+        renderLibraryList();
+        history.replaceState(null, '', '#library');
+        return;
+      }
+
+      if (state === 'input') {
+        atmosphere?.classList.remove('collapsed');
+        ipodStage?.classList.add('hidden');
+        resultsHeader?.classList.add('hidden');
+        detailSection?.classList.add('hidden');
+        errorActions?.classList.add('hidden');
+        ipodClassic?.classList.remove('is-on');
+        exportStatusInline?.classList.add('hidden');
+        if (exportSelectionPill) exportSelectionPill.classList.remove('hidden');
+        exportedTracks.clear();
+        document.getElementById('tracklistSource')?.classList.add('hidden');
+        librarySavedLabel?.classList.add('hidden');
+        updateLibraryLink();
+        history.replaceState(null, '', location.pathname);
+        return;
+      }
+
+      // Everything else: collapse atmosphere, show iPod
+      atmosphere?.classList.add('collapsed');
+      ipodStage?.classList.remove('hidden');
+
+      // iPod screen sub-states
+      if (ipodLoading) ipodLoading.style.display = state === 'loading' ? '' : 'none';
+      if (ipodPlaylist) ipodPlaylist.style.display = state === 'results' ? '' : 'none';
+      if (ipodError) ipodError.style.display = state === 'error' ? '' : 'none';
+
+      // Results header + detail section
+      resultsHeader?.classList.toggle('hidden', state !== 'results');
+      detailSection?.classList.toggle('hidden', state !== 'results');
+      errorActions?.classList.toggle('hidden', state !== 'error');
+      // Player card hidden for now — keep infrastructure intact
+      spotifyPlayerCard?.classList.add('hidden');
+
+      if (state === 'results') {
+        updateLibraryLink();
+        ensureSpotifyController();
+      }
+    }
+
+    function powerOnIPod() {
+      ipodClassic?.classList.add('is-on');
+      ipodOverlay?.classList.remove('is-off');
+      ipodOverlay?.classList.add('turning-on');
+      ipodPowerLine?.classList.add('animate');
+
+      // Clean up animation classes after they complete
+      setTimeout(() => {
+        ipodPowerLine?.classList.remove('animate');
+      }, 600);
+    }
+
+    function getFirstPlayableUri(): string {
+      const firstPlayable = currentData?.tracks?.find((track: any) => hasSpotifyUri(track));
+      return firstPlayable?.spotify?.spotifyUri || pendingSpotifyUri || DEFAULT_SPOTIFY_URI;
+    }
+
+    function ensureSpotifyController() {
+      if (!spotifyEmbedHost || spotifyEmbedController) return;
+
+      const mountController = (IFrameAPI: any) => {
+        if (!spotifyEmbedHost || spotifyEmbedController) return;
+
+        IFrameAPI.createController(
+          spotifyEmbedHost,
+          { uri: getFirstPlayableUri(), width: '100%', height: 152 },
+          (controller: any) => {
+            spotifyEmbedController = controller;
+
+            // Sync playback state from embed (handles card clicks, external pauses, etc.)
+            controller.addListener('playback_update', (e: any) => {
+              const nowPlaying = !e.data.isPaused;
+              if (nowPlaying !== isSpotifyPlaying) {
+                isSpotifyPlaying = nowPlaying;
+                updatePlayingState();
+              }
+            });
+
+            if (pendingSpotifyUri) {
+              spotifyEmbedController.loadUri?.(pendingSpotifyUri);
+              currentLoadedUri = pendingSpotifyUri;
+              spotifyEmbedController.play?.();
+              isSpotifyPlaying = true;
+              pendingSpotifyUri = '';
+              updatePlayingState();
+            }
+          }
+        );
+      };
+
+      const existingApi = (window as any).SpotifyIframeApi;
+      if (existingApi) {
+        mountController(existingApi);
+        return;
+      }
+
+      if (spotifyApiRequested) return;
+      spotifyApiRequested = true;
+
+      const previousReady = (window as any).onSpotifyIframeApiReady;
+      (window as any).onSpotifyIframeApiReady = (IFrameAPI: any) => {
+        if (typeof previousReady === 'function') previousReady(IFrameAPI);
+        mountController(IFrameAPI);
+      };
+
+      const script = document.createElement('script');
+      script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    function playSpotifyUri(uri: string) {
+      pendingSpotifyUri = uri;
+      ensureSpotifyController();
+
+      if (spotifyEmbedController) {
+        // Only reload if it's a different track — avoids restarting from beginning
+        if (uri !== currentLoadedUri) {
+          spotifyEmbedController.loadUri?.(uri);
+          currentLoadedUri = uri;
+        }
+        spotifyEmbedController.play?.();
+        isSpotifyPlaying = true;
+        pendingSpotifyUri = '';
+        updatePlayingState();
+      }
+    }
+
+    // --- Auto-submit on paste ---
+    urlInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        const value = urlInput.value.trim();
+        if (value && (value.includes('youtube.com') || value.includes('youtu.be'))) {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }, 100);
+    });
+
+    // --- Extract form ---
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url) return;
+      setNotice('');
+
+      showState('loading');
+      powerOnIPod();
+
+      try {
+        const res = await fetch('/api/tracklist/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || (data.error && (!data.tracks || data.tracks.length === 0))) {
+          if (errorVideoTitle) errorVideoTitle.textContent = data.title || '';
+          if (errorMessage) errorMessage.textContent = data.error || 'Something went wrong.';
+          if (ipodErrorText) ipodErrorText.textContent = data.error ? 'No tracklist found' : 'Error';
+          showState('error');
+          return;
+        }
+
+        currentData = data;
+        selectedForExport = new Set(data.tracks.map((_: any, index: number) => index));
+        playingIndex = null;
+        updatePlayerStatus('Playback Ready', 'Select a matched track to play in Spotify.');
+        renderIPodPlaylist(data);
+        renderDetailTracklist(data);
+        showState('results');
+
+        // Auto-save to library (non-blocking)
+        setTimeout(() => {
+          saveSet(data, urlInput.value.trim());
+          updateLibraryLink();
+          if (librarySavedLabel) {
+            librarySavedLabel.textContent = 'Saved to My Sets';
+            librarySavedLabel.classList.remove('hidden');
+          }
+          if (data.videoId) {
+            history.replaceState(null, '', '#set=' + data.videoId);
+          }
+        }, 0);
+      } catch {
+        if (errorVideoTitle) errorVideoTitle.textContent = '';
+        if (errorMessage) errorMessage.textContent = 'Something went wrong. Please check your connection and try again.';
+        if (ipodErrorText) ipodErrorText.textContent = 'Connection error';
+        showState('error');
+      }
+    });
+
+    // --- Retry / new search ---
+    retryBtn?.addEventListener('click', resetToInput);
+    newSearchBtn?.addEventListener('click', resetToInput);
+
+    function resetToInput() {
+      urlInput.value = '';
+      currentData = null;
+      selectedIPodIndex = 0;
+      playingIndex = null;
+      selectedForExport.clear();
+      isSpotifyPlaying = false;
+      currentLoadedUri = '';
+      if (ipodSongList) ipodSongList.innerHTML = '';
+      if (tracklist) tracklist.innerHTML = '';
+      updatePlayerStatus('Playback Ready', 'Select a matched track to play in Spotify.');
+      sessionStorage.removeItem('spotify_code_verifier');
+      sessionStorage.removeItem('spotify_oauth_state');
+      sessionStorage.removeItem('tracklist_data');
+      sessionStorage.removeItem('tracklist_url');
+      sessionStorage.removeItem('tracklist_selected');
+      clearOAuthStateCookie();
+      setNotice('');
+      showState('input');
+      urlInput.focus();
+    }
+
+    // --- iPod screen rendering ---
+    function renderIPodPlaylist(data: any) {
+      if (!ipodSongList || !ipodSetTitle) return;
+
+      ipodSetTitle.textContent = truncate(data.title || 'Tracklist', 30);
+      ipodSongList.innerHTML = '';
+      selectedIPodIndex = Math.min(selectedIPodIndex, Math.max(0, data.tracks.length - 1));
+
+      data.tracks.forEach((track: any, index: number) => {
+        const li = document.createElement('li');
+        const classes = ['ipod-song-item'];
+        if (index === selectedIPodIndex) classes.push('selected');
+        if (playingIndex === index) classes.push('playing');
+        li.className = classes.join(' ');
+        li.dataset.index = String(index);
+        li.style.animationDelay = `${index * 80}ms`;
+
+        const num = String(index + 1).padStart(2, '0');
+        li.innerHTML = `
+          <span class="ipod-song-num">${num}</span>
+          <span class="ipod-song-name">${escapeHtml(truncate(track.title, 22))}</span>
+        `;
+
+        li.addEventListener('click', () => {
+          playTrackByIndex(index, 'ipod-list');
+        });
+
+        ipodSongList.appendChild(li);
+      });
+
+      updateIPodScrollbar();
+    }
+
+    function selectIPodSong(index: number) {
+      selectedIPodIndex = index;
+      ipodSongList?.querySelectorAll('.ipod-song-item').forEach((el, i) => {
+        el.classList.toggle('selected', i === index);
+      });
+      // Scroll the iPod song list to keep selected visible (without moving the page)
+      const selected = ipodSongList?.querySelector('.ipod-song-item.selected') as HTMLElement;
+      if (selected && ipodSongList) {
+        const listRect = ipodSongList.getBoundingClientRect();
+        const itemRect = selected.getBoundingClientRect();
+        if (itemRect.top < listRect.top) {
+          ipodSongList.scrollTop -= (listRect.top - itemRect.top);
+        } else if (itemRect.bottom > listRect.bottom) {
+          ipodSongList.scrollTop += (itemRect.bottom - listRect.bottom);
+        }
+      }
+      updateIPodScrollbar();
+    }
+
+    const PLAY_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    const PAUSE_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+    function updatePlayingState() {
+      ipodSongList?.querySelectorAll('.ipod-song-item').forEach((el, i) => {
+        el.classList.toggle('playing', playingIndex === i);
+      });
+
+      tracklist?.querySelectorAll('.track-row').forEach((el, i) => {
+        el.classList.toggle('is-playing', playingIndex === i);
+      });
+
+      // Update play/pause icons
+      tracklist?.querySelectorAll('.play-btn').forEach((btn, i) => {
+        btn.innerHTML = (i === playingIndex && isSpotifyPlaying) ? PAUSE_SVG : PLAY_SVG;
+      });
+    }
+
+    function updateIPodScrollbar() {
+      if (!ipodScrollThumb || !ipodSongList) return;
+      const wrapper = ipodSongList.parentElement;
+      if (!wrapper) return;
+
+      const ratio = wrapper.clientHeight / ipodSongList.scrollHeight;
+      if (ratio >= 1) {
+        ipodScrollThumb.style.display = 'none';
+        return;
+      }
+      ipodScrollThumb.style.display = '';
+      const thumbH = Math.max(10, ratio * (wrapper.clientHeight - 4));
+      const scrollRatio = ipodSongList.scrollTop / (ipodSongList.scrollHeight - wrapper.clientHeight);
+      const maxTop = wrapper.clientHeight - 4 - thumbH;
+      ipodScrollThumb.style.height = thumbH + 'px';
+      ipodScrollThumb.style.top = (scrollRatio * maxTop) + 'px';
+    }
+
+    function scrollDetailTrackIntoView(index: number) {
+      const item = tracklist?.querySelector(`[data-index="${index}"]`);
+      item?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function playTrackByIndex(index: number, source: string) {
+      const track = getTrack(index);
+      if (!track) return;
+
+      selectIPodSong(index);
+
+      if (!hasSpotifyUri(track)) {
+        playingIndex = null;
+        updatePlayingState();
+        updatePlayerStatus(
+          'No Spotify Match',
+          `"${track.title}" has no Spotify match.`
+        );
+        return;
+      }
+
+      playingIndex = index;
+      updatePlayingState();
+      updatePlayerStatus('Now Playing', `${track.title} — ${track.artist}`);
+      playSpotifyUri(track.spotify.spotifyUri);
+    }
+
+    function toggleSpotifyPlayback() {
+      if (!spotifyEmbedController) {
+        const selectedTrack = getTrack(selectedIPodIndex);
+        if (selectedTrack && hasSpotifyUri(selectedTrack)) {
+          playTrackByIndex(selectedIPodIndex, 'ipod-toggle');
+        }
+        return;
+      }
+
+      spotifyEmbedController.togglePlay?.();
+      // Optimistically flip state; playback_update listener will correct if needed
+      isSpotifyPlaying = !isSpotifyPlaying;
+      if (spotifyPlayerStatus) {
+        spotifyPlayerStatus.textContent = isSpotifyPlaying ? 'Now Playing' : 'Paused';
+      }
+      updatePlayingState();
+    }
+
+    // --- iPod button interactivity ---
+    const ipodBtns = ipodClassic?.querySelectorAll('.ipod-btn');
+    const ipodSelectBtn = document.getElementById('ipodSelect');
+
+    if (ipodBtns && ipodBtns.length >= 4) {
+      // Previous
+      ipodBtns[0].addEventListener('click', () => {
+        if (!currentData?.tracks?.length) return;
+        const newIdx = Math.max(0, selectedIPodIndex - 1);
+        playTrackByIndex(newIdx, 'ipod-prev');
+      });
+
+      // Menu — no-op
+      ipodBtns[1].addEventListener('click', () => {});
+
+      // Play/Pause
+      ipodBtns[2].addEventListener('click', () => {
+        toggleSpotifyPlayback();
+      });
+
+      // Next
+      ipodBtns[3].addEventListener('click', () => {
+        if (!currentData?.tracks?.length) return;
+        const newIdx = Math.min(currentData.tracks.length - 1, selectedIPodIndex + 1);
+        playTrackByIndex(newIdx, 'ipod-next');
+      });
+    }
+
+    // Center Select button — play selected song
+    ipodSelectBtn?.addEventListener('click', () => {
+      if (!currentData?.tracks?.length) return;
+      playTrackByIndex(selectedIPodIndex, 'ipod-center');
+    });
+
+    // Mouse wheel on iPod — slower, thresholded navigation
+    ipodClassic?.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (!currentData?.tracks?.length) return;
+
+      const we = e as WheelEvent;
+      wheelDeltaAccumulator += we.deltaY;
+
+      const now = Date.now();
+      if (now - lastWheelMoveAt < WHEEL_COOLDOWN_MS) return;
+      if (Math.abs(wheelDeltaAccumulator) < WHEEL_THRESHOLD) return;
+
+      const direction = wheelDeltaAccumulator > 0 ? 1 : -1;
+      wheelDeltaAccumulator = 0;
+      lastWheelMoveAt = now;
+
+      const newIdx = Math.max(0, Math.min(currentData.tracks.length - 1, selectedIPodIndex + direction));
+      if (newIdx !== selectedIPodIndex) {
+        selectIPodSong(newIdx);
+      }
+    }, { passive: false });
+
+    // --- Detail tracklist rendering ---
+    function renderDetailTracklist(data: any) {
+      if (setTitle) setTitle.textContent = data.title || 'DJ Set';
+      if (channelName) channelName.textContent = data.channelName || '';
+      if (trackCount) trackCount.textContent = data.tracks.length;
+
+      // Show comment attribution when tracks came from a comment
+      const tracklistSource = document.getElementById('tracklistSource');
+      if (tracklistSource) {
+        if (data.source === 'comment' && data.commentAuthor) {
+          const authorName = escapeHtml(data.commentAuthor);
+          if (data.commentUrl) {
+            tracklistSource.innerHTML = `Tracklist by <a href="${escapeAttr(data.commentUrl)}" target="_blank" rel="noopener">${authorName}</a>`;
+          } else {
+            tracklistSource.textContent = `Tracklist by ${data.commentAuthor}`;
+          }
+          tracklistSource.classList.remove('hidden');
+        } else {
+          tracklistSource.innerHTML = '';
+          tracklistSource.classList.add('hidden');
+        }
+      }
+
+      if (!tracklist) return;
+
+      tracklist.innerHTML = '';
+
+      data.tracks.forEach((track: any, index: number) => {
+        const li = document.createElement('li');
+        const isExported = exportedTracks.has(index);
+        li.className = 'track-row' + (isExported ? ' is-exported' : '') + (track.spotify?.found && track.spotify.confidence === 'low' ? ' low-confidence' : '') + (!track.spotify?.found ? ' no-match' : '');
+        li.style.animationDelay = `${index * 40}ms`;
+        li.dataset.index = String(index);
+
+        const isSelected = selectedForExport.has(index);
+
+        const confidenceClass = track.spotify?.found ? `confidence-${track.spotify.confidence}` : 'confidence-none';
+        const confidenceLabel = track.spotify?.found
+          ? (track.spotify.confidence === 'high' ? 'Matched' : track.spotify.confidence === 'medium' ? 'Possible' : 'No match')
+          : 'No match';
+        const manualTag = track.manual ? '<span class="manual-tag">Manual</span>' : '';
+        const exportedBadge = isExported ? '<span class="exported-badge">Exported</span>' : '';
+
+        const spotifyBtn = track.spotify?.found
+          ? `<a href="${escapeAttr(track.spotify.spotifyUrl)}" target="_blank" rel="noopener" class="track-icon-btn spotify-link-btn" aria-label="Open on Spotify" title="Open on Spotify">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+             </a>`
+          : `<span class="track-icon-btn spotify-link-btn spotify-link-disabled" aria-label="No Spotify match" title="No Spotify match">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+             </span>`;
+
+        li.innerHTML = `
+          <input type="checkbox" class="track-select" data-index="${index}" ${isSelected ? 'checked' : ''} aria-label="Select track ${index + 1}" />
+          <span class="track-num">${String(index + 1).padStart(2, '0')}</span>
+          <div class="track-main">
+            <span class="track-title">${escapeHtml(track.title)}</span>
+            <span class="track-sep"> — </span>
+            <span class="track-artist">${escapeHtml(track.artist)}${track.notes ? ` <span class="track-notes">[${escapeHtml(track.notes)}]</span>` : ''}</span>
+            ${manualTag}
+          </div>
+          <div class="track-badges">
+            ${exportedBadge}
+            <span class="confidence-badge ${confidenceClass}">${confidenceLabel}</span>
+          </div>
+          <span class="track-ts">${escapeHtml(track.timestamp)}</span>
+          <div class="track-actions-cell">
+            <button class="track-icon-btn play-btn" data-track-idx="${index}" aria-label="Play in Spotify" title="Play in Spotify">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            ${spotifyBtn}
+          </div>
+        `;
+
+        tracklist.appendChild(li);
+      });
+
+      updatePlayingState();
+      updateExportCount();
+    }
+
+    function handleTracklistClick(e: Event) {
+      const target = e.target as HTMLElement;
+
+      const playBtn = target.closest('.play-btn') as HTMLElement | null;
+      if (playBtn) {
+        const idx = parseInt(playBtn.dataset.trackIdx || '-1', 10);
+        if (idx >= 0) {
+          if (idx === playingIndex) {
+            toggleSpotifyPlayback();
+          } else {
+            playTrackByIndex(idx, 'row-play');
+          }
+        }
+        return;
+      }
+    }
+
+    function handleTracklistDoubleClick(e: Event) {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('.track-actions-cell') ||
+        target.closest('input,button,a,label')
+      ) {
+        return;
+      }
+
+      const row = target.closest('.track-row') as HTMLElement | null;
+      if (!row) return;
+
+      const idx = parseInt(row.dataset.index || '-1', 10);
+      if (idx >= 0) playTrackByIndex(idx, 'row-double-click');
+    }
+
+    function handleTracklistChange(e: Event) {
+      const target = e.target as HTMLInputElement;
+      if (!target.classList.contains('track-select')) return;
+
+      const idx = parseInt(target.dataset.index || '-1', 10);
+      if (idx < 0) return;
+
+      if (target.checked) {
+        selectedForExport.add(idx);
+      } else {
+        selectedForExport.delete(idx);
+      }
+      updateExportCount();
+    }
+
+    function handleSelectAllChange() {
+      if (!currentData?.tracks?.length) return;
+
+      selectedForExport.clear();
+      if (selectAllEl.checked) {
+        currentData.tracks.forEach((_: any, index: number) => {
+          selectedForExport.add(index);
+        });
+      }
+
+      tracklist?.querySelectorAll('.track-select').forEach((cb) => {
+        (cb as HTMLInputElement).checked = selectAllEl.checked;
+      });
+      updateExportCount();
+    }
+
+    tracklist.addEventListener('click', handleTracklistClick);
+    tracklist.addEventListener('dblclick', handleTracklistDoubleClick);
+    tracklist.addEventListener('change', handleTracklistChange);
+    selectAllEl.addEventListener('change', handleSelectAllChange);
+
+    // --- Spotify PKCE Export ---
+    const SPOTIFY_CLIENT_ID = (window as any).__SPOTIFY_CLIENT_ID || '';
+    const REDIRECT_URI = `${window.location.origin}/projects/tracklist`;
+
+    exportSpotifyBtn?.addEventListener('click', startSpotifyExport);
+
+    function clearSpotifyOAuthSession() {
+      sessionStorage.removeItem('spotify_code_verifier');
+      sessionStorage.removeItem('spotify_oauth_state');
+      clearOAuthStateCookie();
+    }
+
+    function clearTracklistSession() {
+      sessionStorage.removeItem('tracklist_data');
+      sessionStorage.removeItem('tracklist_url');
+      sessionStorage.removeItem('tracklist_selected');
+    }
+
+    function getApiErrorMessage(payload: unknown, fallback: string): string {
+      if (!payload || typeof payload !== 'object') return fallback;
+      const body = payload as Record<string, unknown>;
+      if (typeof body.error === 'string' && body.error.trim()) return body.error;
+      if (typeof body.message === 'string' && body.message.trim()) return body.message;
+      const details = body.errorDetails;
+      if (details && typeof details === 'object') {
+        const detailMessage = (details as Record<string, unknown>).message;
+        if (typeof detailMessage === 'string' && detailMessage.trim()) {
+          return detailMessage;
+        }
+      }
+      return fallback;
+    }
+
+    async function parseResponseJson(response: Response): Promise<Record<string, unknown>> {
+      try {
+        const payload = await response.json();
+        if (payload && typeof payload === 'object') {
+          return payload as Record<string, unknown>;
+        }
+      } catch {
+        // Ignore JSON parsing errors and return a generic object
+      }
+      return {};
+    }
+
+    // --- Export celebration ---
+
+    function fireConfetti() {
+      const canvas = document.getElementById('confettiCanvas') as HTMLCanvasElement | null;
+      if (!canvas) return;
+      const stage = canvas.parentElement;
+      if (!stage) return;
+
+      const rect = stage.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const colors = ['#1DB954', '#2D5F3F', '#F4D35E', '#EE964B', '#5B8FB9', '#C75050'];
+      const particles: Array<{
+        x: number; y: number; vx: number; vy: number;
+        w: number; h: number; color: string; rotation: number;
+        rotationSpeed: number; gravity: number; opacity: number;
+      }> = [];
+
+      const cx = rect.width / 2;
+      const cy = rect.height * 0.3;
+
+      for (let i = 0; i < 80; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 6;
+        particles.push({
+          x: cx + (Math.random() - 0.5) * 60,
+          y: cy + (Math.random() - 0.5) * 20,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 3,
+          w: 4 + Math.random() * 6,
+          h: 3 + Math.random() * 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 12,
+          gravity: 0.12 + Math.random() * 0.08,
+          opacity: 1,
+        });
+      }
+
+      let frame = 0;
+      const maxFrames = 120;
+
+      function animate() {
+        if (frame >= maxFrames) {
+          ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+          return;
+        }
+        ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+        for (const p of particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.vx *= 0.99;
+          p.rotation += p.rotationSpeed;
+          p.opacity = Math.max(0, 1 - frame / maxFrames);
+          ctx!.save();
+          ctx!.translate(p.x, p.y);
+          ctx!.rotate((p.rotation * Math.PI) / 180);
+          ctx!.globalAlpha = p.opacity;
+          ctx!.fillStyle = p.color;
+          ctx!.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx!.restore();
+        }
+        frame++;
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function celebrateExport() {
+      if (!exportSpotifyBtn) return;
+
+      const originalHTML = exportSpotifyBtn.innerHTML;
+      exportSpotifyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg> Success!`;
+      exportSpotifyBtn.classList.add('is-success');
+
+      fireConfetti();
+
+      setTimeout(() => {
+        exportSpotifyBtn.innerHTML = originalHTML;
+        exportSpotifyBtn.classList.remove('is-success');
+        newSearchBtn?.classList.add('is-highlighted');
+        setTimeout(() => newSearchBtn?.classList.remove('is-highlighted'), 2000);
+      }, 3000);
+    }
+
+    async function startSpotifyExport() {
+      setNotice('');
+      if (!SPOTIFY_CLIENT_ID) {
+        setNotice('Spotify export is not configured in this beta environment yet.', 'error');
+        return;
+      }
+      const { readyCount } = getSelectionMetrics();
+      if (!currentData?.tracks?.length || readyCount === 0) {
+        setNotice('Select at least one matched track before exporting.', 'error');
+        return;
+      }
+
+      sessionStorage.setItem('tracklist_data', JSON.stringify(currentData));
+      sessionStorage.setItem('tracklist_url', urlInput.value);
+      sessionStorage.setItem('tracklist_selected', JSON.stringify([...selectedForExport]));
+
+      const codeVerifier = generateRandomString(128);
+      const oauthState = generateRandomString(32);
+      sessionStorage.setItem('spotify_code_verifier', codeVerifier);
+      sessionStorage.setItem('spotify_oauth_state', oauthState);
+      setOAuthStateCookie(oauthState);
+      const codeChallenge = await sha256Base64url(codeVerifier);
+
+      const params = new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID, response_type: 'code',
+        redirect_uri: REDIRECT_URI, scope: 'playlist-modify-public playlist-modify-private user-read-private user-library-modify',
+        code_challenge_method: 'S256', code_challenge: codeChallenge,
+        state: oauthState,
+      });
+      window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    }
+
+    async function handleSpotifyCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const error = params.get('error');
+      const state = params.get('state');
+
+      if (error) {
+        history.replaceState({}, '', window.location.pathname);
+        clearSpotifyOAuthSession();
+        setNotice('Spotify login was cancelled.', 'error');
+        if (errorMessage) errorMessage.textContent = 'Spotify login was cancelled.';
+        if (ipodErrorText) ipodErrorText.textContent = 'Login cancelled';
+        powerOnIPod();
+        showState('error');
+        return;
+      }
+
+      if (!code) return;
+      history.replaceState({}, '', window.location.pathname);
+
+      const expectedState = sessionStorage.getItem('spotify_oauth_state');
+      if (!state || !expectedState || state !== expectedState) {
+        clearSpotifyOAuthSession();
+        setNotice('Spotify session validation failed. Please try exporting again.', 'error');
+        if (errorMessage) errorMessage.textContent = 'Session expired. Please extract the tracklist again.';
+        showState('input');
+        return;
+      }
+
+      const codeVerifier = sessionStorage.getItem('spotify_code_verifier');
+      const savedData = sessionStorage.getItem('tracklist_data');
+      const savedUrl = sessionStorage.getItem('tracklist_url');
+
+      if (!codeVerifier || !savedData) {
+        clearSpotifyOAuthSession();
+        if (errorMessage) errorMessage.textContent = 'Session expired. Please extract the tracklist again.';
+        setNotice('Session expired. Please extract the tracklist again.', 'error');
+        showState('input');
+        return;
+      }
+
+      currentData = JSON.parse(savedData);
+      if (savedUrl) urlInput.value = savedUrl;
+      const savedSelected = sessionStorage.getItem('tracklist_selected');
+      if (savedSelected) {
+        selectedForExport = new Set(JSON.parse(savedSelected).map((idx: unknown) => Number(idx)).filter((idx: number) => Number.isInteger(idx)));
+      } else {
+        selectedForExport = new Set(currentData.tracks.map((_: any, i: number) => i));
+      }
+
+      // Skip atmosphere, show iPod directly with loading
+      powerOnIPod();
+      if (ipodLoadingText) ipodLoadingText.textContent = 'Creating playlist...';
+      showState('loading');
+
+      try {
+        // Build track URIs list
+        const uris = currentData.tracks
+          .filter((t: any, i: number) => selectedForExport.has(i) && t.spotify?.found && t.spotify.spotifyUri)
+          .map((t: any) => t.spotify.spotifyUri);
+        const selectedCount = selectedForExport.size;
+        const unresolvedCount = Math.max(0, selectedCount - uris.length);
+
+        // Send to server-side API (avoids browser CORS/permission issues with Spotify)
+        const exportRes = await fetch('/api/tracklist/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code,
+            codeVerifier,
+            state,
+            playlistName: currentData.title || 'DJ Set Tracklist',
+            playlistDescription: currentData.source === 'comment' && currentData.commentAuthor
+              ? `Tracklist by ${currentData.commentAuthor} on "${currentData.title}". Created with lacerda.cl/projects/tracklist`
+              : `Tracklist extracted from "${currentData.title}" by ${currentData.channelName}. Created with lacerda.cl/projects/tracklist`,
+            uris,
+          }),
+        });
+
+        const result = await parseResponseJson(exportRes);
+
+        if (!exportRes.ok) {
+          throw new Error(getApiErrorMessage(result, 'Export failed'));
+        }
+
+        const addedCount = typeof result.addedCount === 'number' ? result.addedCount : 0;
+        const failedCount = typeof result.failedCount === 'number' ? result.failedCount : 0;
+        const likedCount = typeof result.likedCount === 'number' ? result.likedCount : 0;
+        const playlistUrl = typeof result.playlistUrl === 'string' ? result.playlistUrl : '#';
+
+        // Mark exported tracks
+        currentData.tracks.forEach((_: any, i: number) => {
+          if (selectedForExport.has(i) && currentData.tracks[i].spotify?.found && currentData.tracks[i].spotify.spotifyUri) {
+            exportedTracks.add(i);
+          }
+        });
+
+        // Re-render with exported badges
+        renderIPodPlaylist(currentData);
+        renderDetailTracklist(currentData);
+        showState('results');
+
+        // Show inline export status (replaces selection pill)
+        if (exportSelectionPill) exportSelectionPill.classList.add('hidden');
+        const parts = [`${addedCount} track${addedCount !== 1 ? 's' : ''} added`];
+        if (likedCount > 0) parts.push('saved to Liked Songs');
+        if (failedCount > 0) parts.push(`${failedCount} failed`);
+        if (unresolvedCount > 0) parts.push(`${unresolvedCount} skipped`);
+        const summary = parts.join(' · ');
+        if (exportStatusMessage) exportStatusMessage.textContent = summary;
+        if (exportPlaylistLink && playlistUrl !== '#') {
+          exportPlaylistLink.href = playlistUrl;
+          exportPlaylistLink.style.display = '';
+        } else if (exportPlaylistLink) {
+          exportPlaylistLink.style.display = 'none';
+        }
+        exportStatusInline?.classList.remove('hidden');
+
+        // Inline celebration
+        celebrateExport();
+
+        // Save export to library
+        if (currentData?.videoId) {
+          const uris = currentData.tracks
+            .filter((_: any, i: number) => selectedForExport.has(i) && currentData.tracks[i].spotify?.spotifyUri)
+            .map((t: any) => t.spotify.spotifyUri);
+          updateSetExport(currentData.videoId, {
+            exportedAt: new Date().toISOString(),
+            playlistUrl,
+            addedCount,
+            likedCount,
+            failedCount,
+            exportedUris: uris,
+          });
+        }
+
+        clearSpotifyOAuthSession();
+        clearTracklistSession();
+      } catch (err) {
+        console.error('Spotify export error:', err);
+        clearSpotifyOAuthSession();
+        renderIPodPlaylist(currentData);
+        renderDetailTracklist(currentData);
+        showState('results');
+        const msg = err instanceof Error ? err.message : 'Failed to create playlist. Please try again.';
+        setNotice(msg, 'error');
+      }
+    }
+
+    function escapeHtml(str: string): string {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(str: string): string {
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function truncate(str: string, len: number): string {
+      return str.length > len ? str.slice(0, len) + '…' : str;
+    }
+
+    // --- My Sets Library ---
+
+    function updateLibraryLink() {
+      const count = getLibraryCount();
+      if (libraryLink) {
+        libraryLink.classList.toggle('hidden', count === 0);
+      }
+      if (libraryCountBadge) libraryCountBadge.textContent = String(count);
+      if (resultsLibraryBtn) {
+        resultsLibraryBtn.classList.toggle('hidden', count === 0);
+      }
+      if (resultsLibraryCount) resultsLibraryCount.textContent = String(count);
+    }
+
+    function formatLibraryDate(iso: string): string {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch {
+        return '';
+      }
+    }
+
+    function renderLibraryList(filterQuery?: string) {
+      if (!libraryList || !libraryEmpty) return;
+
+      const sets = filterQuery ? searchLibrary(filterQuery) : loadLibrary();
+
+      if (sets.length === 0) {
+        libraryList.innerHTML = '';
+        libraryEmpty.classList.remove('hidden');
+        return;
+      }
+
+      libraryEmpty.classList.add('hidden');
+
+      libraryList.innerHTML = sets.map((set) => {
+        const matchedCount = set.tracks.filter((t) => t.spotify.found).length;
+        const hasExport = set.exportHistory.length > 0;
+        const thumbSrc = set.thumbnailUrl ? escapeAttr(set.thumbnailUrl) : '';
+
+        return `<div class="library-row" data-video-id="${escapeAttr(set.videoId)}">
+          ${thumbSrc ? `<img class="library-row-thumb" src="${thumbSrc}" alt="" loading="lazy" />` : '<div class="library-row-thumb"></div>'}
+          <div class="library-row-info">
+            <p class="library-row-title">${escapeAttr(truncate(set.title, 60))}</p>
+            <div class="library-row-meta">
+              <span class="library-row-channel">${escapeAttr(set.channelName)}</span>
+              <span>${set.tracks.length} tracks${matchedCount > 0 ? ` · ${matchedCount} matched` : ''}</span>
+              <span>${formatLibraryDate(set.extractedAt)}</span>
+              ${hasExport ? '<span class="library-exported-badge">Exported</span>' : ''}
+            </div>
+          </div>
+          <button class="library-delete-btn" data-delete-id="${escapeAttr(set.videoId)}" title="Delete set" aria-label="Delete ${escapeAttr(set.title)}">×</button>
+        </div>`;
+      }).join('');
+
+      // Event delegation for row clicks and delete buttons
+      libraryList.onclick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+
+        // Delete button
+        const deleteBtn = target.closest('.library-delete-btn') as HTMLElement | null;
+        if (deleteBtn) {
+          e.stopPropagation();
+          const videoId = deleteBtn.dataset.deleteId;
+          if (videoId && confirm('Delete this set from your library?')) {
+            deleteSet(videoId);
+            updateLibraryLink();
+            renderLibraryList(librarySearch?.value || undefined);
+          }
+          return;
+        }
+
+        // Row click
+        const row = target.closest('.library-row') as HTMLElement | null;
+        if (row?.dataset.videoId) {
+          openSavedSet(row.dataset.videoId);
+        }
+      };
+    }
+
+    function openSavedSet(videoId: string) {
+      const set = loadSet(videoId);
+      if (!set) return;
+
+      currentData = toTracklistData(set);
+      selectedForExport = new Set(currentData.tracks.map((_: any, i: number) => i));
+      playingIndex = null;
+
+      // Restore per-track exported state from export history
+      exportedTracks.clear();
+      const exportedUris = getExportedUrisForSet(set);
+      if (exportedUris.size > 0) {
+        currentData.tracks.forEach((t: any, i: number) => {
+          if (t.spotify?.spotifyUri && exportedUris.has(t.spotify.spotifyUri)) {
+            exportedTracks.add(i);
+          }
+        });
+      }
+
+      updatePlayerStatus('Playback Ready', 'Select a matched track to play in Spotify.');
+      powerOnIPod();
+      renderIPodPlaylist(currentData);
+      renderDetailTracklist(currentData);
+      showState('results');
+
+      // Show export status if previously exported
+      if (set.exportHistory.length > 0) {
+        const latest = set.exportHistory[set.exportHistory.length - 1];
+        if (exportSelectionPill) exportSelectionPill.classList.add('hidden');
+        const parts = [`${latest.addedCount} track${latest.addedCount !== 1 ? 's' : ''} added`];
+        if (latest.likedCount > 0) parts.push('saved to Liked Songs');
+        if (exportStatusMessage) exportStatusMessage.textContent = parts.join(' · ');
+        if (exportPlaylistLink && latest.playlistUrl !== '#') {
+          exportPlaylistLink.href = latest.playlistUrl;
+          exportPlaylistLink.style.display = '';
+        } else if (exportPlaylistLink) {
+          exportPlaylistLink.style.display = 'none';
+        }
+        exportStatusInline?.classList.remove('hidden');
+      }
+
+      urlInput.value = set.videoUrl || '';
+
+      // Show "Loaded from My Sets" label
+      if (librarySavedLabel) {
+        librarySavedLabel.textContent = 'Loaded from My Sets';
+        librarySavedLabel.classList.remove('hidden');
+      }
+
+      history.replaceState(null, '', '#set=' + videoId);
+    }
+
+    // Library search with debounce
+    let librarySearchTimer: ReturnType<typeof setTimeout> | null = null;
+    librarySearch?.addEventListener('input', () => {
+      if (librarySearchTimer) clearTimeout(librarySearchTimer);
+      librarySearchTimer = setTimeout(() => {
+        renderLibraryList(librarySearch.value || undefined);
+      }, 200);
+    });
+
+    // Library button clicks
+    openLibraryBtn?.addEventListener('click', () => showState('library'));
+    resultsLibraryBtn?.addEventListener('click', () => showState('library'));
+
+    // Hash-based navigation
+    function handleHashState(): boolean {
+      const hash = location.hash;
+      // Skip if OAuth callback is in progress
+      if (location.search.includes('code=')) return false;
+
+      if (hash === '#library' && getLibraryCount() > 0) {
+        showState('library');
+        return true;
+      }
+
+      if (hash.startsWith('#set=')) {
+        const videoId = hash.slice(5);
+        if (videoId && loadSet(videoId)) {
+          openSavedSet(videoId);
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    window.addEventListener('hashchange', () => {
+      handleHashState();
+    });
+
+    // --- Init ---
+    handleSpotifyCallback();
+
+    // If no OAuth callback was handled, check hash state or default to library
+    if (!location.search.includes('code=')) {
+      if (!handleHashState()) {
+        // Default to library on return visits if sets exist
+        if (getLibraryCount() > 0) {
+          showState('library');
+        } else {
+          updateLibraryLink();
+        }
+      }
+    }
+  }
+
+  initTracklist();
+  document.addEventListener('astro:after-swap', initTracklist);
+</script>
+
+<style is:global>
+  /* ========================================
+     Page Layout
+     ======================================== */
+  .tracklist-page {
+    padding-top: var(--space-4xl);
+    padding-bottom: var(--space-5xl);
+    min-height: 70vh;
+  }
+
+  .tracklist-page .hidden { display: none; }
+
+  /* ========================================
+     Atmosphere: Quotes + Input
+     ======================================== */
+  .tracklist-page .atmosphere {
+    text-align: left;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .tracklist-page .atmosphere.collapsed {
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, height 0.4s ease;
+  }
+
+  .tracklist-page .quotes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-3xl);
+  }
+
+  .tracklist-page .atmosphere-quote {
+    border-left: none;
+    padding: 0;
+    margin: 0;
+    font-style: italic;
+    line-height: var(--leading-body);
+  }
+
+  .tracklist-page .atmosphere-quote p {
+    font-size: var(--text-base);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-xs);
+  }
+
+  .tracklist-page .atmosphere-quote cite {
+    font-style: normal;
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .tracklist-page .atmosphere-quote cite::before {
+    content: '— ';
+  }
+
+  /* --- Input --- */
+  .tracklist-page .url-input-form {
+    max-width: 28rem;
+    margin: 0;
+  }
+
+  .tracklist-page .input-wrapper {
+    position: relative;
+  }
+
+  .tracklist-page .url-input-form input[type="url"] {
+    width: 100%;
+    padding: var(--space-sm) 0;
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    background: transparent;
+    font-size: var(--text-lg);
+    font-family: var(--font-serif);
+    color: var(--color-text);
+    text-align: left;
+    transition: border-color var(--transition-base);
+  }
+
+  .tracklist-page .url-input-form input[type="url"]::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.4;
+    font-style: italic;
+  }
+
+  .tracklist-page .url-input-form input[type="url"]:focus {
+    outline: none;
+    border-bottom-color: var(--color-accent);
+  }
+
+  .tracklist-page .input-underline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--color-accent);
+    transition: width 0.3s ease;
+  }
+
+  .tracklist-page .url-input-form input[type="url"]:focus ~ .input-underline {
+    width: 100%;
+  }
+
+  .tracklist-page .input-hint {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    font-style: italic;
+    text-align: left;
+  }
+
+  .tracklist-page .input-notice {
+    margin-top: var(--space-sm);
+    font-size: var(--text-sm);
+    text-align: left;
+    color: var(--color-text-muted);
+  }
+
+  .tracklist-page .input-notice.error {
+    color: #8f3d3d;
+  }
+
+  .tracklist-page .input-notice.success {
+    color: #2f6e4f;
+  }
+
+  /* ========================================
+     iPod Stage
+     ======================================== */
+  .tracklist-page .ipod-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--space-2xl);
+    opacity: 0;
+    transform: translateY(24px);
+    animation: ipodStageEnter 0.6s ease 0.2s forwards;
+  }
+
+  .tracklist-page .ipod-stage.hidden {
+    display: none;
+    opacity: 0;
+    animation: none;
+  }
+
+  /* Side-by-side layout */
+  .tracklist-page .ipod-and-list {
+    display: flex;
+    gap: var(--space-2xl);
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .tracklist-page .ipod-column {
+    flex-shrink: 0;
+  }
+
+  @keyframes ipodStageEnter {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========================================
+     iPod Classic — CSS Art
+     ======================================== */
+  .tracklist-page .ipod-classic {
+    --ipod-w: 240px;
+    --ipod-screen-bg: #9BA87C;
+    --ipod-screen-lit: #B8C99A;
+    --ipod-screen-text: #2C3320;
+    --ipod-white: #E8E6E0;
+    --ipod-white-hi: #F5F3EF;
+    --ipod-white-sh: #CBC8C0;
+    --ipod-chrome: #C8C8C8;
+    --ipod-chrome-hi: #E0E0E0;
+    --ipod-chrome-sh: #999;
+    position: relative;
+  }
+
+  .tracklist-page .ipod-chrome-edge {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: calc(var(--ipod-w) + 4px);
+    height: calc(var(--ipod-w) * 1.72 + 4px);
+    border-radius: 20px;
+    background: linear-gradient(145deg, var(--ipod-chrome-hi) 0%, var(--ipod-chrome) 50%, var(--ipod-chrome-sh) 100%);
+    z-index: -1;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  .tracklist-page .ipod-body {
+    width: var(--ipod-w);
+    height: calc(var(--ipod-w) * 1.72);
+    background: linear-gradient(180deg, var(--ipod-white-hi) 0%, var(--ipod-white) 5%, var(--ipod-white) 90%, var(--ipod-white-sh) 100%);
+    border-radius: 18px;
+    padding: 20px 18px 16px;
+    box-shadow:
+      0 10px 40px rgba(0,0,0,0.18),
+      0 2px 8px rgba(0,0,0,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.6),
+      inset -1px 0 3px rgba(0,0,0,0.02),
+      inset 1px 0 3px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* --- Screen --- */
+  .tracklist-page .ipod-screen-housing {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .tracklist-page .ipod-label {
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    color: #aaa;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .tracklist-page .ipod-screen {
+    width: 100%;
+    aspect-ratio: 160 / 128;
+    background: var(--ipod-screen-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  .tracklist-page .ipod-classic.is-on .ipod-screen {
+    background: var(--ipod-screen-lit);
+  }
+
+  /* Screen overlay (off / power-on) */
+  .tracklist-page .ipod-screen-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: var(--ipod-screen-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s ease 0.3s;
+  }
+
+  .tracklist-page .ipod-screen-overlay.turning-on {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .tracklist-page .ipod-screen-overlay.is-off {
+    opacity: 1;
+    pointer-events: auto;
+    transition: none;
+  }
+
+  .tracklist-page .ipod-power-line {
+    width: 0;
+    height: 1px;
+    background: var(--ipod-screen-text);
+    opacity: 0;
+  }
+
+  .tracklist-page .ipod-power-line.animate {
+    animation: lcdPowerOn 0.5s ease-out forwards;
+  }
+
+  @keyframes lcdPowerOn {
+    0% { width: 0; height: 1px; opacity: 1; }
+    50% { width: 60%; height: 1px; opacity: 1; }
+    80% { width: 100%; height: 100%; opacity: 0.3; }
+    100% { width: 100%; height: 100%; opacity: 0; }
+  }
+
+  /* LCD glow */
+  .tracklist-page .ipod-lcd-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(184,201,154,0.35) 0%, rgba(184,201,154,0.08) 70%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .tracklist-page .ipod-classic.is-on .ipod-lcd-glow { opacity: 1; }
+
+  /* Screen content */
+  .tracklist-page .ipod-screen-content {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    padding: 4px 6px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    line-height: 1.4;
+    color: var(--ipod-screen-text);
+    -webkit-font-smoothing: none;
+    overflow: hidden;
+  }
+
+  /* Loading */
+  .tracklist-page .ipod-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 6px;
+  }
+
+  .tracklist-page .ipod-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(44,51,32,0.2);
+    border-top-color: var(--ipod-screen-text);
+    border-radius: 50%;
+    animation: ipodSpin 0.8s linear infinite;
+  }
+
+  @keyframes ipodSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  .tracklist-page .ipod-loading-text {
+    font-size: 8px;
+    opacity: 0.8;
+  }
+
+  /* Playlist */
+  .tracklist-page .ipod-header-bar {
+    border-bottom: 1px solid var(--ipod-screen-text);
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    font-weight: 700;
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tracklist-page .ipod-playlist {
+    height: 100%;
+  }
+
+  .tracklist-page .ipod-song-list-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: calc(100% - 18px);
+  }
+
+  .tracklist-page .ipod-song-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    height: 100%;
+    scrollbar-width: none;
+  }
+
+  .tracklist-page .ipod-song-list::-webkit-scrollbar { display: none; }
+
+  .tracklist-page .ipod-song-item {
+    display: flex;
+    gap: 4px;
+    padding: 1px 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0;
+    animation: ipodSongAppear 200ms ease forwards;
+  }
+
+  @keyframes ipodSongAppear {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tracklist-page .ipod-song-item.selected {
+    background: rgba(44,51,32,0.1);
+    color: var(--ipod-screen-text);
+  }
+
+  .tracklist-page .ipod-song-item.playing {
+    background: var(--ipod-screen-text);
+    color: var(--ipod-screen-lit);
+  }
+
+  .tracklist-page .ipod-song-item:hover:not(.playing) {
+    background: rgba(44,51,32,0.16);
+  }
+
+  .tracklist-page .ipod-song-num {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: right;
+    opacity: 0.6;
+  }
+
+  .tracklist-page .ipod-song-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Scrollbar */
+  .tracklist-page .ipod-scrollbar {
+    position: absolute;
+    right: 1px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(44,51,32,0.1);
+    border-radius: 1.5px;
+  }
+
+  .tracklist-page .ipod-scrollbar-thumb {
+    width: 100%;
+    background: var(--ipod-screen-text);
+    border-radius: 1.5px;
+    position: absolute;
+    top: 0;
+    min-height: 8px;
+    opacity: 0.4;
+  }
+
+  /* Error on screen */
+  .tracklist-page .ipod-error, .tracklist-page .ipod-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .tracklist-page .ipod-error-icon {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .tracklist-page .ipod-error-text, .tracklist-page .ipod-success-text {
+    font-size: 8px;
+  }
+
+  .tracklist-page .ipod-success-icon {
+    font-size: 16px;
+  }
+
+  /* --- Controls --- */
+  .tracklist-page .ipod-control-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .tracklist-page .ipod-button-row {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .tracklist-page .ipod-btn {
+    width: 42px;
+    height: 16px;
+    border-radius: 3px;
+    border: none;
+    background: linear-gradient(to bottom, #D4D0C8, #C0BCB4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.08);
+    font-size: 6px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    letter-spacing: 0.04em;
+    font-family: -apple-system, sans-serif;
+  }
+
+  .tracklist-page .ipod-wheel {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #D4D0C8, #B8B4AC);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.4), 0 4px 12px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .tracklist-page .ipod-wheel::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .tracklist-page .ipod-wheel::after {
+    content: '';
+    position: absolute;
+    inset: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.03);
+  }
+
+  .tracklist-page .ipod-select {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(145deg, var(--ipod-white-hi), var(--ipod-white-sh));
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+    cursor: default;
+    z-index: 1;
+  }
+
+  .tracklist-page .ipod-classic.is-on .ipod-btn,
+  .tracklist-page .ipod-classic.is-on .ipod-select {
+    cursor: pointer;
+  }
+
+  .tracklist-page .ipod-classic.is-on .ipod-btn:active {
+    background: linear-gradient(to bottom, #C0BCB4, #B0ACA4);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.12);
+  }
+
+  .tracklist-page .ipod-classic.is-on .ipod-select:active {
+    background: linear-gradient(145deg, var(--ipod-white-sh), var(--ipod-white-hi));
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.12);
+  }
+
+  /* ========================================
+     Spotify Player
+     ======================================== */
+  .tracklist-page .spotify-player-card {
+    margin-top: var(--space-md);
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background-color: var(--color-surface);
+    width: min(100%, 270px);
+  }
+
+  .tracklist-page .spotify-player-status {
+    margin-bottom: 2px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .tracklist-page .spotify-player-track {
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    line-height: var(--leading-snug);
+  }
+
+  .tracklist-page .spotify-embed-host {
+    min-height: 152px;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #121212;
+  }
+
+  .tracklist-page .spotify-embed-offscreen {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  /* ========================================
+     Detail Tracklist
+     ======================================== */
+  .tracklist-page .detail-section {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0;
+    opacity: 0;
+    animation: detailEnter 0.5s ease 0.3s forwards;
+  }
+
+  .tracklist-page .detail-section .tracklist {
+    max-height: 72vh;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background-color: var(--color-bg);
+  }
+
+  .tracklist-page .detail-section.hidden {
+    display: none;
+    opacity: 0;
+    animation: none;
+  }
+
+  @keyframes detailEnter {
+    to { opacity: 1; }
+  }
+
+  .tracklist-page .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+    width: 100%;
+    position: sticky;
+    top: var(--space-sm);
+    z-index: 10;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--color-bg) 94%, transparent);
+    backdrop-filter: blur(6px);
+  }
+
+  .tracklist-page .results-header.hidden {
+    display: none;
+  }
+
+  .tracklist-page .set-title {
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+    margin-bottom: var(--space-xs);
+  }
+
+  .tracklist-page .set-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .tracklist-page .tracklist-source {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+  .tracklist-page .tracklist-source.hidden { display: none; }
+  .tracklist-page .tracklist-source a {
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .tracklist-page .tracklist-source a:hover { color: var(--color-accent); }
+
+  .tracklist-page .track-count-badge {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding: 2px var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+  }
+
+  .tracklist-page .selection-summary {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    padding: 2px var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+  }
+
+  .tracklist-page .results-actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  /* --- Buttons --- */
+  .tracklist-page .primary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--space-sm) var(--space-lg);
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+    border: none;
+    border-radius: 4px;
+    font-size: var(--text-sm);
+    font-family: var(--font-serif);
+    cursor: pointer;
+    transition: background-color var(--transition-base);
+    white-space: nowrap;
+    text-decoration: none;
+    background-image: none;
+  }
+
+  .tracklist-page .primary-btn:hover {
+    background-color: var(--color-accent-hover);
+    background-image: none;
+    background-size: 0;
+  }
+
+  .tracklist-page .secondary-btn {
+    padding: var(--space-sm) var(--space-lg);
+    background-color: transparent;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: var(--text-sm);
+    font-family: var(--font-serif);
+    cursor: pointer;
+    transition: border-color var(--transition-base), color var(--transition-base);
+    white-space: nowrap;
+  }
+
+  .tracklist-page .secondary-btn:hover {
+    border-color: var(--color-text-muted);
+    color: var(--color-text);
+  }
+
+  .tracklist-page .export-selection-pill {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    padding: 2px var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  /* --- Tracklist --- */
+  .tracklist-page .tracklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tracklist-page .track-row {
+    display: grid;
+    grid-template-columns: 1.5rem 2rem 1fr auto auto auto;
+    align-items: center;
+    gap: 0 var(--space-sm);
+    padding: 6px var(--space-xs);
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+    opacity: 0;
+    transform: translateY(4px);
+    animation: trackAppear 300ms ease forwards;
+    transition: background-color var(--transition-base), border-color var(--transition-base);
+  }
+
+  .tracklist-page .track-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 2px;
+    background: transparent;
+  }
+
+  .tracklist-page .track-row.low-confidence::before {
+    background: #d97706;
+  }
+
+  .tracklist-page .track-row.no-match::before {
+    background: #9ca3af;
+  }
+
+  .tracklist-page .track-row.low-confidence,
+  .tracklist-page .track-row.no-match {
+    background-color: rgba(107, 114, 128, 0.045);
+  }
+
+  .tracklist-page .track-row:hover {
+    background-color: var(--color-surface);
+  }
+
+  @keyframes trackAppear {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- Track number --- */
+  .tracklist-page .track-num {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-align: right;
+    padding-right: var(--space-xs);
+  }
+
+  /* --- Track main (title — artist) --- */
+  .tracklist-page .track-main {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 2px;
+    cursor: default;
+  }
+
+  .tracklist-page .track-title {
+    font-weight: 500;
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  .tracklist-page .track-sep {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .tracklist-page .track-artist {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .tracklist-page .track-notes {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+  }
+
+  .tracklist-page .manual-tag {
+    display: inline-block;
+    margin-left: var(--space-xs);
+    padding: 1px 4px;
+    border-radius: 100px;
+    background-color: #e6f4ea;
+    color: #166534;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  /* --- Badge container --- */
+  .tracklist-page .track-badges {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* --- Confidence badges --- */
+  .tracklist-page .confidence-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .tracklist-page .confidence-high { background-color: #dcfce7; color: #166534; }
+  .tracklist-page .confidence-medium { background-color: #fef9c3; color: #854d0e; }
+  .tracklist-page .confidence-low, .tracklist-page .confidence-none { background-color: var(--color-surface); color: var(--color-text-muted); }
+
+  /* --- Timestamp --- */
+  .tracklist-page .track-ts {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    letter-spacing: var(--tracking-wide);
+    white-space: nowrap;
+  }
+
+  /* --- Action icons --- */
+  .tracklist-page .track-actions-cell {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-self: end;
+  }
+
+  .tracklist-page .track-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    background-image: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color var(--transition-base), background-color var(--transition-base);
+    text-decoration: none;
+    padding: 0;
+  }
+
+  .tracklist-page .track-icon-btn:hover {
+    color: var(--color-accent);
+    background-color: var(--color-surface);
+    background-image: none;
+    background-size: 0;
+  }
+
+  .tracklist-page .track-icon-btn.play-btn:hover { color: var(--color-text); }
+  .tracklist-page .track-icon-btn.spotify-link-btn:hover { color: #1DB954; }
+
+  .tracklist-page .spotify-link-disabled {
+    opacity: 0.45;
+  }
+
+  .tracklist-page .spotify-link-disabled:hover {
+    opacity: 1;
+  }
+
+  /* --- Playing row highlight --- */
+  .tracklist-page .track-row.is-playing {
+    background-color: var(--color-surface);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .tracklist-page .track-row.is-playing .track-num {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .tracklist-page .track-row.is-playing::before {
+    background: var(--color-accent);
+  }
+
+  /* --- Checkboxes --- */
+  .tracklist-page .track-select {
+    accent-color: var(--color-accent);
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .tracklist-page .select-all-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    cursor: pointer;
+  }
+
+  .tracklist-page .primary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* --- Error actions (beside iPod on desktop, below on mobile) --- */
+  .tracklist-page .error-actions {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-xl);
+    opacity: 0;
+    animation: detailEnter 0.5s ease 0.3s forwards;
+  }
+  .tracklist-page .error-actions.hidden {
+    display: none;
+    opacity: 0;
+    animation: none;
+  }
+
+  .tracklist-page .error-title { font-weight: 500; margin-bottom: var(--space-xs); }
+  .tracklist-page .error-message { color: var(--color-text-muted); margin-bottom: var(--space-lg); font-style: italic; }
+
+  /* --- Export celebration --- */
+  .tracklist-page .confetti-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  @keyframes exportSuccessPulse {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.08); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.04); }
+    60% { transform: scale(1); }
+  }
+
+  .tracklist-page .primary-btn.is-success {
+    background-color: #1DB954;
+    animation: exportSuccessPulse 0.8s ease;
+    pointer-events: none;
+  }
+
+  @keyframes extractHighlight {
+    0%, 100% { border-color: var(--color-border); color: var(--color-text-muted); }
+    40% { border-color: var(--color-accent); color: var(--color-accent); }
+  }
+
+  .tracklist-page .secondary-btn.is-highlighted {
+    animation: extractHighlight 2s ease 1;
+  }
+
+  /* --- Export status inline (in header row) --- */
+  .tracklist-page .export-status-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: #1DB954;
+  }
+  .tracklist-page .export-status-inline.hidden { display: none; }
+  .tracklist-page .export-status-inline svg { flex-shrink: 0; }
+  .tracklist-page .export-status-inline a {
+    color: #1DB954;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .tracklist-page .export-status-inline a:hover { text-decoration: underline; }
+
+  /* --- Exported track indicators --- */
+  .tracklist-page .track-row.is-exported::before {
+    background: #1DB954 !important;
+  }
+
+  .tracklist-page .exported-badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #1DB954;
+    padding: 1px 5px;
+    border: 1px solid rgba(29, 185, 84, 0.3);
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* ========================================
+     My Sets Library
+     ======================================== */
+
+  /* Layout wrapper: two-column grid when library is visible */
+  .tracklist-page .library-layout.is-library-view {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--space-3xl);
+    align-items: start;
+  }
+
+  /* Right column overrides when in library view */
+  .tracklist-page .library-layout.is-library-view .url-input-form {
+    max-width: none;
+  }
+  .tracklist-page .library-layout.is-library-view .quotes {
+    margin-bottom: var(--space-xl);
+  }
+
+  /* Left column overrides when in library view */
+  .tracklist-page .library-layout.is-library-view .library-section {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Extract label — shown in input and library views */
+  .tracklist-page .extract-label {
+    font-family: var(--font-serif);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    margin: 0 0 var(--space-md);
+    font-weight: 400;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+  .tracklist-page .extract-label.hidden { display: none; }
+
+  .tracklist-page .library-link {
+    text-align: left;
+    margin-top: var(--space-lg);
+  }
+
+  .tracklist-page .library-link-btn {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-family: var(--font-serif);
+    font-size: var(--text-base);
+    cursor: pointer;
+    padding: var(--space-xs) var(--space-sm);
+    transition: color var(--transition-base);
+  }
+  .tracklist-page .library-link-btn:hover {
+    color: var(--color-text);
+  }
+
+  .tracklist-page .library-section {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: var(--space-xl) 0;
+  }
+  .tracklist-page .library-section.hidden { display: none; }
+
+  .tracklist-page .library-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+  }
+
+  .tracklist-page .library-title {
+    font-size: var(--text-xl);
+    font-weight: 400;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .tracklist-page .library-controls {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tracklist-page .library-search {
+    width: 100%;
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: transparent;
+    font-size: var(--text-sm);
+    font-family: var(--font-serif);
+    color: var(--color-text);
+    transition: border-color var(--transition-base);
+  }
+  .tracklist-page .library-search::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.65;
+    font-style: italic;
+  }
+  .tracklist-page .library-search:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .tracklist-page .library-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .tracklist-page .library-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-sm);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color var(--transition-base);
+    position: relative;
+  }
+  .tracklist-page .library-row:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  .tracklist-page .library-row-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background-color: var(--color-border);
+  }
+
+  .tracklist-page .library-row-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tracklist-page .library-row-title {
+    font-family: var(--font-serif);
+    font-size: var(--text-base);
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+
+  .tracklist-page .library-row-meta {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .tracklist-page .library-row-channel {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 12rem;
+  }
+
+  .tracklist-page .library-exported-badge {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #1DB954;
+    padding: 0 4px;
+    border: 1px solid rgba(29, 185, 84, 0.3);
+    border-radius: 3px;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .tracklist-page .library-delete-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--space-xs);
+    opacity: 0;
+    transition: opacity var(--transition-base), color var(--transition-base);
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+  }
+  .tracklist-page .library-row:hover .library-delete-btn {
+    opacity: 1;
+  }
+  .tracklist-page .library-delete-btn:hover {
+    color: #c75050;
+  }
+
+  .tracklist-page .library-empty {
+    text-align: center;
+    padding: var(--space-3xl) 0;
+    color: var(--color-text-muted);
+  }
+  .tracklist-page .library-empty.hidden { display: none; }
+  .tracklist-page .library-empty p { margin: 0; }
+  .tracklist-page .library-empty-hint {
+    font-size: var(--text-sm);
+    font-style: italic;
+    margin-top: var(--space-sm);
+  }
+
+  .tracklist-page .library-saved-label {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    font-style: italic;
+    margin-left: var(--space-sm);
+    vertical-align: middle;
+  }
+  .tracklist-page .library-saved-label.hidden { display: none; }
+
+  .tracklist-page .library-results-btn.hidden { display: none; }
+
+  /* ========================================
+     Responsive
+     ======================================== */
+  @media (max-width: 479px) {
+    .tracklist-page .ipod-classic { --ipod-w: 210px; }
+    .tracklist-page .ipod-wheel { width: 100px; height: 100px; }
+    .tracklist-page .ipod-select { width: 38px; height: 38px; }
+    .tracklist-page .ipod-btn { width: 36px; height: 14px; font-size: 5px; }
+
+    .tracklist-page .track-ts { display: none; }
+    .tracklist-page .track-row { grid-template-columns: 1.5rem 2rem 1fr auto auto; }
+    .tracklist-page .track-icon-btn { width: 24px; height: 24px; }
+    .tracklist-page .track-icon-btn svg { width: 12px; height: 12px; }
+
+    .tracklist-page .results-header {
+      flex-direction: column;
+      position: static;
+      border-bottom: none;
+      padding: 0;
+      backdrop-filter: none;
+      background-color: transparent;
+    }
+    .tracklist-page .results-actions { width: 100%; }
+    .tracklist-page .results-actions .primary-btn,
+    .tracklist-page .results-actions .secondary-btn { flex: 1; text-align: center; justify-content: center; }
+    .tracklist-page .results-actions .export-selection-pill { flex-basis: 100%; text-align: center; }
+
+    .tracklist-page .library-header { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
+    .tracklist-page .library-row-thumb { width: 40px; height: 40px; }
+    .tracklist-page .library-delete-btn { opacity: 1; }
+  }
+
+  @media (max-width: 767px) {
+    /* Center atmosphere content on mobile (both input and library states) */
+    .tracklist-page .atmosphere {
+      text-align: center;
+    }
+    .tracklist-page .url-input-form input[type="url"] {
+      text-align: center;
+    }
+    .tracklist-page .input-hint {
+      text-align: center;
+    }
+    .tracklist-page .extract-label {
+      text-align: center;
+    }
+    .tracklist-page .library-link {
+      text-align: center;
+    }
+
+    /* Library grid → single column on mobile */
+    .tracklist-page .library-layout.is-library-view {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+
+    .tracklist-page .ipod-and-list {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tracklist-page .detail-section {
+      width: 100%;
+    }
+
+    .tracklist-page .error-actions {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 480px) {
+    .tracklist-page .ipod-classic { --ipod-w: 250px; }
+  }
+
+  @media (min-width: 640px) {
+    .tracklist-page { padding-top: var(--space-5xl); }
+    .tracklist-page .ipod-classic { --ipod-w: 270px; }
+    .tracklist-page .ipod-wheel { width: 130px; height: 130px; }
+    .tracklist-page .ipod-select { width: 48px; height: 48px; }
+  }
+</style>
