@@ -76,6 +76,7 @@ async function getSpotifyToken(): Promise<string | null> {
   }
 
   const data = await res.json();
+  console.log('Spotify token obtained, expires_in:', data.expires_in, 'token_type:', data.token_type);
   cachedToken = {
     access_token: data.access_token,
     expires_at: Date.now() / 1000 + data.expires_in,
@@ -229,7 +230,9 @@ export async function searchSpotifyQuery(query: string): Promise<SpotifySearchQu
   );
 
   if (!res.ok) {
-    return { available: false, reason: 'api_error', results: [] };
+    const errBody = await res.text().catch(() => '');
+    console.error('Spotify search failed:', res.status, errBody);
+    return { available: false, reason: 'api_error', results: [], _debug: { status: res.status, body: errBody } } as any;
   }
   const data = await res.json();
   return { available: true, results: extractCandidates(data) };
