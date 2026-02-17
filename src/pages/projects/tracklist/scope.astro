@@ -80,7 +80,7 @@ import PageLayout from '../../../layouts/PageLayout.astro';
 
       <details class="scope-section" id="evidence">
         <summary><h2>Evidence</h2></summary>
-        <p>People already want this. They ask for it in YouTube comments, Reddit threads, and music forums — over and over. We collected 1,024 comments expressing demand for tracklists, track IDs, and playlists from DJ sets. After strict filtering for high-intent signals, 273 remain as direct proof of demand. Data collected February 17, 2026.</p>
+        <p>People already want this. They ask for it in YouTube comments, Reddit threads, and music forums — over and over. I collected 1,024 comments expressing demand for tracklists, track IDs, and playlists from DJ sets. After strict filtering for high-intent signals, 273 remain as direct proof of demand. Data collected February 17, 2026.</p>
 
         <div class="evidence-stats">
           <span class="evidence-stat"><strong>1,024</strong> comments collected</span>
@@ -643,22 +643,23 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     display: none;
   }
 
-  .scope-section summary::after {
+  .scope-section > summary::after {
     content: '+';
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    font-size: 1.25rem;
+    color: #2D5F3F;
     margin-left: auto;
     flex-shrink: 0;
+    font-weight: 700;
     transition: color var(--transition-base);
   }
 
-  .scope-section[open] summary::after {
+  .scope-section[open] > summary::after {
     content: '\2212';
   }
 
-  .scope-section summary:hover::after {
-    color: var(--color-accent);
+  .scope-section > summary:hover::after {
+    color: #1a3a25;
   }
 
   .scope-section summary h2 {
@@ -1107,14 +1108,20 @@ import PageLayout from '../../../layouts/PageLayout.astro';
   .evidence-methodology summary::after {
     content: '+';
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    font-size: 1.25rem;
+    color: #2D5F3F;
     margin-left: auto;
     flex-shrink: 0;
+    font-weight: 700;
+    transition: color var(--transition-base);
   }
 
   .evidence-methodology[open] summary::after {
     content: '\2212';
+  }
+
+  .evidence-methodology summary:hover::after {
+    color: #1a3a25;
   }
 
   .evidence-methodology summary h3 {
