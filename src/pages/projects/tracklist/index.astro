@@ -53,6 +53,13 @@ import PageLayout from '../../../layouts/PageLayout.astro';
           <button type="submit" class="visually-hidden" tabindex="-1">Extract</button>
         </form>
         <p class="input-hint">Works best with Cercle, Boiler Room, Anjunadeep, and sets that list timestamps.</p>
+        <div id="spotifyConnectRow" class="spotify-connect-row">
+          <button id="spotifyConnectBtn" class="spotify-connect-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            Connect Spotify
+          </button>
+          <span id="spotifyConnectStatus" class="spotify-connect-status"></span>
+        </div>
         <p id="tracklistNotice" class="input-notice hidden" role="status" aria-live="polite"></p>
         <p id="libraryLink" class="library-link hidden">
           <button id="openLibraryBtn" class="library-link-btn">
@@ -192,6 +199,10 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     clearOAuthStateCookie,
   } from '../../../scripts/tracklist/oauth';
   import {
+    searchAllTracks,
+    type SpotifyMatch,
+  } from '../../../scripts/tracklist/spotify-search';
+  import {
     saveSet,
     updateSetExport,
     loadLibrary,
@@ -203,7 +214,7 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     getExportedUrisForSet,
   } from '../../../scripts/tracklist/library';
 
-  function initTracklist() {
+  async function initTracklist() {
     // --- DOM refs ---
     const atmosphere = document.getElementById('atmosphere');
     const ipodStage = document.getElementById('ipodStage');
@@ -258,6 +269,9 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     const libraryLayout = document.getElementById('libraryLayout');
     const extractLabel = document.getElementById('extractLabel');
     const librarySavedLabel = document.getElementById('librarySavedLabel');
+    const spotifyConnectBtn = document.getElementById('spotifyConnectBtn');
+    const spotifyConnectStatus = document.getElementById('spotifyConnectStatus');
+    const spotifyConnectRow = document.getElementById('spotifyConnectRow');
 
     if (!form || !urlInput || !tracklist || !selectAllEl) return;
     if (form.dataset.tracklistBound === 'true') return;
@@ -268,6 +282,7 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     let playingIndex: number | null = null;
     let selectedForExport = new Set<number>();
     let exportedTracks = new Set<number>();
+    let spotifyAccessToken: string | null = sessionStorage.getItem('spotify_access_token');
     let wheelDeltaAccumulator = 0;
     let lastWheelMoveAt = 0;
     const WHEEL_THRESHOLD = 50;
@@ -543,6 +558,13 @@ import PageLayout from '../../../layouts/PageLayout.astro';
           return;
         }
 
+        // Initialize tracks without spotify data if not present
+        for (const track of data.tracks) {
+          if (!track.spotify) {
+            track.spotify = { found: false, spotifyUrl: '', spotifyUri: '', albumArt: '', confidence: 'low', score: 0, candidates: [] };
+          }
+        }
+
         currentData = data;
         selectedForExport = new Set(data.tracks.map((_: any, index: number) => index));
         playingIndex = null;
@@ -550,6 +572,11 @@ import PageLayout from '../../../layouts/PageLayout.astro';
         renderIPodPlaylist(data);
         renderDetailTracklist(data);
         showState('results');
+
+        // Run client-side Spotify search if connected
+        if (spotifyAccessToken) {
+          runClientSpotifySearch(data);
+        }
 
         // Auto-save to library (non-blocking)
         setTimeout(() => {
@@ -935,9 +962,201 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     tracklist.addEventListener('change', handleTracklistChange);
     selectAllEl.addEventListener('change', handleSelectAllChange);
 
-    // --- Spotify PKCE Export ---
+    // --- Spotify PKCE ---
     const SPOTIFY_CLIENT_ID = (window as any).__SPOTIFY_CLIENT_ID || '';
     const REDIRECT_URI = `${window.location.origin}/projects/tracklist`;
+
+    function updateSpotifyConnectUI() {
+      if (!spotifyConnectBtn || !spotifyConnectStatus) return;
+      if (spotifyAccessToken) {
+        spotifyConnectBtn.classList.add('is-connected');
+        spotifyConnectBtn.textContent = 'Spotify Connected';
+        spotifyConnectStatus.textContent = '';
+      } else {
+        spotifyConnectBtn.classList.remove('is-connected');
+        spotifyConnectBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg> Connect Spotify`;
+        spotifyConnectStatus.textContent = 'for track matching';
+      }
+    }
+
+    updateSpotifyConnectUI();
+
+    async function startSpotifyConnect() {
+      if (!SPOTIFY_CLIENT_ID) {
+        setNotice('Spotify is not configured.', 'error');
+        return;
+      }
+
+      // Save current URL input so we can restore after redirect
+      sessionStorage.setItem('tracklist_url', urlInput.value);
+      sessionStorage.setItem('spotify_connect_flow', 'true');
+
+      const codeVerifier = generateRandomString(128);
+      const oauthState = generateRandomString(32);
+      sessionStorage.setItem('spotify_code_verifier', codeVerifier);
+      sessionStorage.setItem('spotify_oauth_state', oauthState);
+      setOAuthStateCookie(oauthState);
+      const codeChallenge = await sha256Base64url(codeVerifier);
+
+      const params = new URLSearchParams({
+        client_id: SPOTIFY_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: REDIRECT_URI,
+        scope: 'playlist-modify-public playlist-modify-private user-read-private user-library-modify',
+        code_challenge_method: 'S256',
+        code_challenge: codeChallenge,
+        state: oauthState,
+      });
+      window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    }
+
+    spotifyConnectBtn?.addEventListener('click', () => {
+      if (spotifyAccessToken) return; // Already connected
+      startSpotifyConnect();
+    });
+
+    async function handleSpotifyConnectCallback(): Promise<boolean> {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
+      const isConnectFlow = sessionStorage.getItem('spotify_connect_flow') === 'true';
+
+      if (!code || !isConnectFlow) return false;
+
+      sessionStorage.removeItem('spotify_connect_flow');
+      history.replaceState({}, '', window.location.pathname);
+
+      const expectedState = sessionStorage.getItem('spotify_oauth_state');
+      if (!state || !expectedState || state !== expectedState) {
+        clearSpotifyOAuthSession();
+        setNotice('Spotify session validation failed. Please try connecting again.', 'error');
+        return true;
+      }
+
+      const codeVerifier = sessionStorage.getItem('spotify_code_verifier');
+      if (!codeVerifier) {
+        clearSpotifyOAuthSession();
+        setNotice('Session expired. Please try connecting again.', 'error');
+        return true;
+      }
+
+      // Exchange code for token via Spotify directly (PKCE doesn't need client secret)
+      try {
+        const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: REDIRECT_URI,
+            client_id: SPOTIFY_CLIENT_ID,
+            code_verifier: codeVerifier,
+          }),
+        });
+
+        if (!tokenRes.ok) {
+          throw new Error('Token exchange failed');
+        }
+
+        const tokenData = await tokenRes.json();
+        spotifyAccessToken = tokenData.access_token;
+        sessionStorage.setItem('spotify_access_token', spotifyAccessToken!);
+
+        // Store refresh token for future use
+        if (tokenData.refresh_token) {
+          sessionStorage.setItem('spotify_refresh_token', tokenData.refresh_token);
+        }
+
+        updateSpotifyConnectUI();
+        setNotice('Spotify connected! Paste a YouTube URL to extract and match tracks.', 'success');
+      } catch {
+        setNotice('Failed to connect to Spotify. Please try again.', 'error');
+      }
+
+      clearSpotifyOAuthSession();
+
+      // Restore URL input
+      const savedUrl = sessionStorage.getItem('tracklist_url');
+      if (savedUrl) urlInput.value = savedUrl;
+
+      return true;
+    }
+
+    // --- Client-side Spotify search after extraction ---
+
+    async function runClientSpotifySearch(data: any) {
+      if (!spotifyAccessToken || !data?.tracks?.length) return;
+
+      if (spotifyConnectStatus) {
+        spotifyConnectStatus.textContent = 'Matching tracks...';
+      }
+
+      await searchAllTracks(
+        data.tracks,
+        spotifyAccessToken,
+        (index: number, match: SpotifyMatch) => {
+          // Update the track data in place
+          if (data.tracks[index]) {
+            data.tracks[index].spotify = match;
+          }
+
+          // Update the detail tracklist row
+          const row = tracklist?.querySelector(`[data-index="${index}"]`) as HTMLElement | null;
+          if (row) {
+            updateTrackRow(row, data.tracks[index], index);
+          }
+
+          // Update selection metrics
+          updateExportCount();
+
+          // Update connect status with progress
+          if (spotifyConnectStatus) {
+            const matched = data.tracks.filter((t: any) => t.spotify?.found).length;
+            spotifyConnectStatus.textContent = `Matched ${matched} of ${data.tracks.length}`;
+          }
+        }
+      );
+
+      // Final update
+      if (spotifyConnectStatus) {
+        const matched = data.tracks.filter((t: any) => t.spotify?.found).length;
+        spotifyConnectStatus.textContent = `${matched} matched`;
+      }
+
+      // Re-save to library with match data
+      saveSet(data, urlInput.value.trim());
+    }
+
+    function updateTrackRow(row: HTMLElement, track: any, index: number) {
+      // Update confidence badge
+      const badge = row.querySelector('.confidence-badge');
+      if (badge) {
+        const confidenceClass = track.spotify?.found ? `confidence-${track.spotify.confidence}` : 'confidence-none';
+        const confidenceLabel = track.spotify?.found
+          ? (track.spotify.confidence === 'high' ? 'Matched' : track.spotify.confidence === 'medium' ? 'Possible' : 'No match')
+          : 'No match';
+        badge.className = `confidence-badge ${confidenceClass}`;
+        badge.textContent = confidenceLabel;
+      }
+
+      // Update row classes
+      row.classList.toggle('no-match', !track.spotify?.found);
+      row.classList.toggle('low-confidence', track.spotify?.found && track.spotify.confidence === 'low');
+
+      // Update Spotify link
+      const spotifyLink = row.querySelector('.spotify-link-btn');
+      if (spotifyLink && track.spotify?.found && track.spotify.spotifyUrl) {
+        const a = document.createElement('a');
+        a.href = track.spotify.spotifyUrl;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.className = 'track-icon-btn spotify-link-btn';
+        a.setAttribute('aria-label', 'Open on Spotify');
+        a.title = 'Open on Spotify';
+        a.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+        spotifyLink.replaceWith(a);
+      }
+    }
 
     exportSpotifyBtn?.addEventListener('click', startSpotifyExport);
 
@@ -1437,7 +1656,13 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     });
 
     // --- Init ---
-    handleSpotifyCallback();
+    // Handle Spotify connect callback first (returns true if it was a connect flow)
+    const wasConnectCallback = await handleSpotifyConnectCallback();
+
+    if (!wasConnectCallback) {
+      // Handle export callback (existing flow)
+      handleSpotifyCallback();
+    }
 
     // If no OAuth callback was handled, check hash state or default to library
     if (!location.search.includes('code=')) {
@@ -1587,6 +1812,47 @@ import PageLayout from '../../../layouts/PageLayout.astro';
 
   .tracklist-page .input-notice.success {
     color: #2f6e4f;
+  }
+
+  /* --- Spotify Connect --- */
+  .tracklist-page .spotify-connect-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+  }
+
+  .tracklist-page .spotify-connect-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #1DB954;
+    border-radius: 2rem;
+    background: transparent;
+    color: #1DB954;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .tracklist-page .spotify-connect-btn:hover {
+    background: #1DB954;
+    color: #fff;
+  }
+
+  .tracklist-page .spotify-connect-btn.is-connected {
+    background: #1DB954;
+    color: #fff;
+    cursor: default;
+    border-color: #1DB954;
+  }
+
+  .tracklist-page .spotify-connect-status {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    font-style: italic;
   }
 
   /* ========================================

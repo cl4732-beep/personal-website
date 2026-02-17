@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { extractVideoId, fetchVideoMetadata, parseTracklist, fetchTracklistFromComments } from '../../../lib/youtube';
-import { searchTracks } from '../../../lib/spotify';
 import { json, jsonError } from '../../../lib/http';
 import { checkRateLimit, getRateLimitKey, rateLimitHeaders } from '../../../lib/rate-limit';
 
@@ -69,15 +68,13 @@ export const POST: APIRoute = async ({ request }) => {
         }, 200, rateLimitHeaders(rate));
       }
 
-      const commentTracksWithMatches = await searchTracks(commentResult.tracks);
-
       return json({
         ok: true,
         title: metadata.title,
         channelName: metadata.channelName,
         thumbnailUrl: metadata.thumbnailUrl,
         videoId: metadata.videoId,
-        tracks: commentTracksWithMatches,
+        tracks: commentResult.tracks,
         source: 'comment',
         commentAuthor: commentResult.commentAuthor,
         commentLikes: commentResult.commentLikes,
@@ -85,15 +82,13 @@ export const POST: APIRoute = async ({ request }) => {
       }, 200, rateLimitHeaders(rate));
     }
 
-    const tracksWithMatches = await searchTracks(tracks);
-
     return json({
       ok: true,
       title: metadata.title,
       channelName: metadata.channelName,
       thumbnailUrl: metadata.thumbnailUrl,
       videoId: metadata.videoId,
-      tracks: tracksWithMatches,
+      tracks,
     }, 200, rateLimitHeaders(rate));
   } catch (err) {
     console.error('Tracklist extraction error:', err);
