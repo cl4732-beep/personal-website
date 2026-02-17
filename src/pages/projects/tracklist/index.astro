@@ -215,6 +215,7 @@ import PageLayout from '../../../layouts/PageLayout.astro';
   } from '../../../scripts/tracklist/library';
 
   async function initTracklist() {
+    console.log('[tracklist] init');
     // --- DOM refs ---
     const atmosphere = document.getElementById('atmosphere');
     const ipodStage = document.getElementById('ipodStage');
@@ -576,6 +577,8 @@ import PageLayout from '../../../layouts/PageLayout.astro';
         // Run client-side Spotify search if connected
         if (spotifyAccessToken) {
           runClientSpotifySearch(data);
+        } else {
+          setNotice('Connect Spotify above to match and play tracks.', 'info');
         }
 
         // Auto-save to library (non-blocking)
@@ -965,6 +968,7 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     // --- Spotify PKCE ---
     const SPOTIFY_CLIENT_ID = (window as any).__SPOTIFY_CLIENT_ID || '';
     const REDIRECT_URI = `${window.location.origin}/projects/tracklist`;
+    console.log('[tracklist] SPOTIFY_CLIENT_ID:', SPOTIFY_CLIENT_ID ? SPOTIFY_CLIENT_ID.slice(0, 4) + '...' : '(empty)');
 
     function updateSpotifyConnectUI() {
       if (!spotifyConnectBtn || !spotifyConnectStatus) return;
@@ -982,8 +986,14 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     updateSpotifyConnectUI();
 
     async function startSpotifyConnect() {
+      console.log('[tracklist] Connect Spotify clicked');
       if (!SPOTIFY_CLIENT_ID) {
-        setNotice('Spotify is not configured.', 'error');
+        console.error('[tracklist] PUBLIC_SPOTIFY_CLIENT_ID not set — button disabled');
+        setNotice('Spotify is not configured. Please contact the site owner.', 'error');
+        if (spotifyConnectBtn) {
+          spotifyConnectBtn.style.borderColor = '#c75050';
+          spotifyConnectBtn.style.color = '#c75050';
+        }
         return;
       }
 
