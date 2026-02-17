@@ -231,8 +231,20 @@ export async function searchSpotifyQuery(query: string): Promise<SpotifySearchQu
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => '');
-    console.error('Spotify search failed:', res.status, errBody);
-    return { available: false, reason: 'api_error', results: [], _debug: { status: res.status, body: errBody } } as any;
+    const retryAfter = res.headers.get('retry-after');
+    console.error('Spotify search failed:', res.status, errBody, 'retry-after:', retryAfter);
+    return {
+      available: false,
+      reason: 'api_error',
+      results: [],
+      _debug: {
+        status: res.status,
+        body: errBody,
+        retryAfter,
+        tokenPreview: token.slice(0, 10) + '...',
+        tokenLength: token.length,
+      },
+    } as any;
   }
   const data = await res.json();
   return { available: true, results: extractCandidates(data) };
