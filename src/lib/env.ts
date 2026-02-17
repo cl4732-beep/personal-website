@@ -1,17 +1,17 @@
 export type EnvSource = Record<string, string | undefined>;
 
-function readEnv(name: string, env: EnvSource = import.meta.env): string | undefined {
+function readEnv(name: string, env: EnvSource = process.env): string | undefined {
   const value = env[name];
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-export function optionalEnv(name: string, env: EnvSource = import.meta.env): string | undefined {
+export function optionalEnv(name: string, env: EnvSource = process.env): string | undefined {
   return readEnv(name, env);
 }
 
-export function requiredEnv(name: string, context: string, env: EnvSource = import.meta.env): string {
+export function requiredEnv(name: string, context: string, env: EnvSource = process.env): string {
   const value = readEnv(name, env);
   if (!value) {
     throw new Error(`[env] Missing required variable \"${name}\" for ${context}`);
@@ -22,7 +22,7 @@ export function requiredEnv(name: string, context: string, env: EnvSource = impo
 export function requireEnvSet(
   names: string[],
   context: string,
-  env: EnvSource = import.meta.env
+  env: EnvSource = process.env
 ): Record<string, string> {
   const missing: string[] = [];
   const values: Record<string, string> = {};
@@ -43,7 +43,7 @@ export function requireEnvSet(
   return values;
 }
 
-export function parseCsvEnv(name: string, env: EnvSource = import.meta.env): string[] {
+export function parseCsvEnv(name: string, env: EnvSource = process.env): string[] {
   const value = readEnv(name, env);
   if (!value) return [];
   return value
