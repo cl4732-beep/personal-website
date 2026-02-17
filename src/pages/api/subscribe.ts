@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   }
 
   const token = crypto.randomUUID();
-  const buttondownKey = import.meta.env.BUTTONDOWN_API_KEY;
+  const buttondownKey = process.env.BUTTONDOWN_API_KEY;
 
   // 1. Store subscriber in Supabase with tracking token
   if (supabase) {

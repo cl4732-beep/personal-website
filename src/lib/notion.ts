@@ -32,8 +32,8 @@ async function findDatabaseId(pageId: string, token: string): Promise<string> {
 }
 
 export async function getBooks(): Promise<Book[]> {
-  const token = import.meta.env.NOTION_TOKEN;
-  const pageId = import.meta.env.NOTION_BOOKS_DATABASE_ID;
+  const token = process.env.NOTION_TOKEN;
+  const pageId = process.env.NOTION_BOOKS_DATABASE_ID;
   const databaseId = await findDatabaseId(pageId, token);
 
   const results: Book[] = [];

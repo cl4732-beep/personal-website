@@ -44,12 +44,12 @@ interface TrackWithMatches {
 let cachedToken: SpotifyTokens | null = null;
 
 function hasSpotifyClientCredentials(): boolean {
-  return Boolean(import.meta.env.SPOTIFY_CLIENT_ID && import.meta.env.SPOTIFY_CLIENT_SECRET);
+  return Boolean(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET);
 }
 
 async function getSpotifyToken(): Promise<string | null> {
-  const clientId = import.meta.env.SPOTIFY_CLIENT_ID;
-  const clientSecret = import.meta.env.SPOTIFY_CLIENT_SECRET;
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) return null;
 

@@ -54,9 +54,9 @@ async function getAccessToken(): Promise<string> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      client_id: import.meta.env.STRAVA_CLIENT_ID,
-      client_secret: import.meta.env.STRAVA_CLIENT_SECRET,
-      refresh_token: import.meta.env.STRAVA_REFRESH_TOKEN,
+      client_id: process.env.STRAVA_CLIENT_ID,
+      client_secret: process.env.STRAVA_CLIENT_SECRET,
+      refresh_token: process.env.STRAVA_REFRESH_TOKEN,
       grant_type: 'refresh_token',
     }),
   });
@@ -71,7 +71,7 @@ async function getAccessToken(): Promise<string> {
 
 export async function getAthleteStats(): Promise<StravaAthleteStats> {
   const token = await getAccessToken();
-  const athleteId = import.meta.env.STRAVA_ATHLETE_ID;
+  const athleteId = process.env.STRAVA_ATHLETE_ID;
   const res = await fetch(
     `https://www.strava.com/api/v3/athletes/${athleteId}/stats`,
     { headers: { Authorization: `Bearer ${token}` } }

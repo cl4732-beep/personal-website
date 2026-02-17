@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 export const GET: APIRoute = async ({ request }) => {
-  const callbackEnabled = import.meta.env.STRAVA_OAUTH_CALLBACK_ENABLED === 'true';
+  const callbackEnabled = process.env.STRAVA_OAUTH_CALLBACK_ENABLED === 'true';
   if (!callbackEnabled) {
     return new Response('Not found', { status: 404 });
   }
@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  const expectedState = import.meta.env.STRAVA_OAUTH_STATE;
+  const expectedState = process.env.STRAVA_OAUTH_STATE;
 
   if (expectedState && state !== expectedState) {
     return new Response('Invalid OAuth state.', { status: 403 });
@@ -23,8 +23,8 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
-  const clientId = import.meta.env.STRAVA_CLIENT_ID;
-  const clientSecret = import.meta.env.STRAVA_CLIENT_SECRET;
+  const clientId = process.env.STRAVA_CLIENT_ID;
+  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return new Response('Missing Strava client credentials in environment.', { status: 500 });
   }
