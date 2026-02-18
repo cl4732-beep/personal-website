@@ -1666,16 +1666,18 @@ import PageLayout from '../../../layouts/PageLayout.astro';
     });
 
     // --- Init ---
+    const urlHadCode = location.search.includes('code=');
+
     // Handle Spotify connect callback first (returns true if it was a connect flow)
     const wasConnectCallback = await handleSpotifyConnectCallback();
 
     if (!wasConnectCallback) {
       // Handle export callback (existing flow)
-      handleSpotifyCallback();
+      await handleSpotifyCallback();
     }
 
     // If no OAuth callback was handled, check hash state or default to library
-    if (!location.search.includes('code=')) {
+    if (!urlHadCode) {
       if (!handleHashState()) {
         // Default to library on return visits if sets exist
         if (getLibraryCount() > 0) {
